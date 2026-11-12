@@ -1,6 +1,10 @@
 import * as db from './db.js?v=1.4.3';
 
 const CONFIG_KEY = 'vantage-cloud-config-v1';
+const DEFAULT_CLOUD_CONFIG = {
+  url: 'https://uikytbpxkbbosjqgrtqr.supabase.co',
+  key: 'sb_publishable_BqXRkEGOj0Erzr14GGcScA_UsIY2wSD'
+};
 const MEDIA_STORES = new Set(['sessionMedia', 'exerciseMedia', 'supplementMedia']);
 const CORE_STORES = db.STORES.filter(name => !MEDIA_STORES.has(name));
 
@@ -9,7 +13,7 @@ let currentSession = null;
 let authSubscription = null;
 
 function readConfig() {
-  try { return JSON.parse(localStorage.getItem(CONFIG_KEY)) || {}; } catch { return {}; }
+  try { return { ...DEFAULT_CLOUD_CONFIG, ...(JSON.parse(localStorage.getItem(CONFIG_KEY)) || {}) }; } catch { return { ...DEFAULT_CLOUD_CONFIG }; }
 }
 
 function saveConfig(config) {
