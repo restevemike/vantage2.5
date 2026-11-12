@@ -1,0 +1,1468 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101820">
+  <meta name="description" content="VANTAGE Training Console — a local-first workout, readiness, meal and vitals tracker.">
+  <title>Vantage Training Console</title>
+  <link rel="manifest" href="manifest.webmanifest?v=1.4.3">
+  <link rel="icon" href="icons/vantage-favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/vantage-icon-192-v133.png">
+  <link rel="stylesheet" href="styles.css?v=1.4.3">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <img class="brand-mark-image" src="icons/vantage-app-icon-dark.svg" alt="" aria-hidden="true">
+      <div>
+        <h1>Vantage</h1>
+        <p>Training Console <span class="version-badge">v1.4.3</span></p>
+      </div>
+    </div>
+    <button id="installButton" class="button button-ghost button-small" hidden>Install</button>
+  </header>
+
+  <main class="app-main">
+    <section id="dashboardScreen" class="screen active" data-screen="dashboard">
+      <div class="screen-heading">
+        <div>
+          <p class="eyebrow" id="todayLabel"></p>
+          <h2>Dashboard</h2>
+        </div>
+        <button class="button button-primary" data-go="vitals">Log vitals</button>
+      </div>
+
+      <article id="readinessCard" class="readiness-card readiness-neutral">
+        <div class="readiness-orb" id="readinessOrb">–</div>
+        <div class="readiness-copy">
+          <p class="eyebrow">Today’s readiness</p>
+          <h3 id="readinessTitle">No reading yet</h3>
+          <p id="readinessMessage">Log today’s vitals to generate a training recommendation.</p>
+        </div>
+      </article>
+
+      <div id="bpAlert" class="alert alert-warning" hidden></div>
+
+      <div class="metric-grid" id="dashboardMetrics"></div>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Next action</p>
+            <h3>Today’s training</h3>
+          </div>
+          <div class="panel-actions dashboard-training-actions">
+            <button id="recordRestDayButton" class="button button-rest" type="button">Rest Day</button>
+            <button class="button button-primary" data-go="workout">Open workout</button>
+          </div>
+        </div>
+        <div id="todayPlan" class="empty-state">Choose a template and begin a session.</div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Recent activity</p>
+            <h3>Latest sessions</h3>
+          </div>
+          <button class="text-button" data-go="history">View history</button>
+        </div>
+        <div id="recentSessions" class="stack-list"></div>
+      </section>
+    </section>
+
+    <section id="workoutScreen" class="screen" data-screen="workout">
+      <div class="screen-heading">
+        <div>
+          <p class="eyebrow">Gym mode</p>
+          <h2>Today’s workout</h2>
+        </div>
+        <div class="heading-actions">
+          <button class="button button-ghost button-small" data-coach-context="workout">Ask Alex</button>
+          <button id="discardWorkoutButton" class="button button-ghost button-small">Reset</button>
+        </div>
+      </div>
+
+      <section id="activeCycleBanner" class="cycle-banner" hidden></section>
+
+      <section class="panel workout-setup">
+        <label>
+          Session template
+          <select id="templateSelect"></select>
+        </label>
+        <div id="workoutModeField">
+          <span class="field-label">Mode</span>
+          <div id="modePicker" class="segmented-control" role="group" aria-label="Workout mode">
+            <button data-mode="normal" class="active">Normal</button>
+            <button data-mode="deload">Deload</button>
+            <button data-mode="bp-watch">BP watch</button>
+            <button data-mode="recovery-watch">Recovery watch</button>
+          </div>
+        </div>
+        <div class="setup-actions">
+          <button id="startWorkoutButton" class="button button-primary button-wide">Start / load session</button>
+        </div>
+      </section>
+
+      <div id="workoutStatus" class="session-status" hidden></div>
+
+      <section id="lissPanel" class="panel liss-panel" hidden>
+        <div class="panel-heading">
+          <div><p class="eyebrow">Cardio session</p><h3>LISS tracker</h3></div>
+          <span id="lissClassificationBadge" class="classification-badge" hidden></span>
+        </div>
+
+        <div>
+          <span class="field-label">Activity</span>
+          <div id="lissActivityPicker" class="segmented-control liss-activity-picker" role="group" aria-label="LISS activity">
+            <button type="button" data-liss-activity="treadmill-walk">Treadmill walk</button>
+            <button type="button" data-liss-activity="stairmaster">StairMaster</button>
+            <button type="button" data-liss-activity="outdoor-walk">Outdoor walk</button>
+            <button type="button" data-liss-activity="walking" class="active">Walking / unsure</button>
+          </div>
+        </div>
+
+        <section class="panel liss-manual-duration-panel">
+          <div class="panel-heading compact-heading">
+            <div><p class="eyebrow">Manual session timing</p><h3>Duration and time</h3></div>
+            <span class="source-badge">User entered</span>
+          </div>
+          <p class="liss-source-note">Enter the duration shown by the source you trust. Screenshot durations remain separate and are never used to overwrite this value automatically.</p>
+          <div class="form-grid liss-metrics-grid">
+            <label>Duration (minutes)<input id="lissManualDurationMinutes" type="number" min="0" max="600" step="1" inputmode="numeric" placeholder="47"></label>
+            <label>Start time (optional)<input id="lissManualStartTime" type="time"></label>
+            <label>End time (optional)<input id="lissManualEndTime" type="time"></label>
+          </div>
+        </section>
+
+        <div class="liss-context-grid">
+          <label class="checkbox-card"><input id="lissFasted" type="checkbox"> Fasted session</label>
+          <label class="checkbox-card"><input id="lissNasalBreathing" type="checkbox"> Nasal breathing throughout</label>
+        </div>
+        <label>Next planned session<input id="lissNextPlannedSession" type="text" placeholder="Legs tomorrow, Chest & Biceps, rest day…"></label>
+        <label>Comments<textarea id="lissComments" rows="3" placeholder="Easy pace, nasal breathing throughout, legs felt fresh, no drift…"></textarea></label>
+
+        <div class="alert alert-info liss-machine-source-note">
+          <strong>Machine data:</strong> VANTAGE uses console screenshots/manual machine fields for normal treadmill and StairMaster sessions. Experimental FTMS Bluetooth is no longer part of the workout flow.
+        </div>
+
+        <details class="liss-metrics-panel liss-session-context" open>
+          <summary>Pre-LISS BP and hydration</summary>
+          <p class="liss-source-note">These values are stored against this session. A pre-LISS reading never overwrites the morning vitals record.</p>
+          <div class="form-grid liss-metrics-grid">
+            <label>BP time<input id="lissPreBpTime" type="time"></label>
+            <label>Systolic<input id="lissPreSystolic" type="number" min="60" max="260" step="1" placeholder="127"></label>
+            <label>Diastolic<input id="lissPreDiastolic" type="number" min="30" max="160" step="1" placeholder="71"></label>
+            <label>Pulse<input id="lissPrePulse" type="number" min="20" max="220" step="1" placeholder="55"></label>
+          </div>
+          <div class="liss-media-actions">
+            <button id="openLissBpButton" class="button button-ghost" type="button">Add BP screenshot</button>
+            <input id="lissBpInput" class="visually-hidden-file" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif">
+          </div>
+          <div class="form-grid liss-metrics-grid">
+            <label>Coconut water (ml)<input id="lissCoconutWaterMl" type="number" min="0" step="50" placeholder="500"></label>
+            <label>Plain water (ml)<input id="lissWaterMl" type="number" min="0" step="50" placeholder="1000"></label>
+            <label>Other drink / fluid (ml)<input id="lissOtherFluidMl" type="number" min="0" step="50" placeholder="500"></label>
+            <label>EAAs / BCAAs<input id="lissAminoAcids" type="text" placeholder="EAAs"></label>
+            <label>Electrolytes<input id="lissElectrolytes" type="text" placeholder="Electrolyte mix / salt"></label>
+            <label>Hydration notes<input id="lissHydrationNotes" type="text" placeholder="500ml intra-LISS drink containing EAAs and electrolytes"></label>
+          </div>
+          <label>Macro / meal correction<textarea id="lissMacroCorrection" rows="2" placeholder="Meal 2 used 250g cooked potatoes, not rice."></textarea></label>
+          <p class="liss-source-note">Generic fluid, EAAs and electrolytes are hydration/support only unless a calorie-containing drink such as coconut water, juice or dextrose is explicitly recorded.</p>
+        </details>
+
+        <details class="liss-metrics-panel liss-source-review" open>
+          <summary>Review source-separated metrics before export</summary>
+          <p class="liss-source-note">Enter or confirm only what is visible. Sources remain separate and conflicting calorie, heart-rate, distance and duration values are never averaged.</p>
+
+          <details class="liss-source-card" open>
+            <summary>NOOP Strap session summary</summary>
+            <div class="form-grid liss-metrics-grid">
+              <label>Activity shown<input data-liss-source="vantageStrap" data-liss-key="activityShown" data-liss-type="text" type="text" placeholder="Walking"></label>
+              <label>Date shown<input data-liss-source="vantageStrap" data-liss-key="dateShown" data-liss-type="text" type="text" placeholder="2026-07-29"></label>
+              <label>Time range<input data-liss-source="vantageStrap" data-liss-key="timeRange" data-liss-type="text" type="text" placeholder="17:59–18:46"></label>
+              <label>Duration minutes<input data-liss-source="vantageStrap" data-liss-key="durationMinutes" type="number" min="0" step="any" placeholder="48"></label>
+              <label>Average HR<input data-liss-source="vantageStrap" data-liss-key="avgHr" type="number" min="0" step="any" placeholder="108"></label>
+              <label>Maximum HR<input data-liss-source="vantageStrap" data-liss-key="maxHr" type="number" min="0" step="any" placeholder="135"></label>
+              <label>Minimum HR<input data-liss-source="vantageStrap" data-liss-key="minHr" type="number" min="0" step="any" placeholder="68"></label>
+              <label>Distance km<input data-liss-source="vantageStrap" data-liss-key="distanceKm" type="number" min="0" step="any" placeholder="4.9"></label>
+              <label>Calories<input data-liss-source="vantageStrap" data-liss-key="calories" type="number" min="0" step="any" placeholder="0"></label>
+              <label>Effort<input data-liss-source="vantageStrap" data-liss-key="effort" type="number" min="0" step="any" placeholder="18.1"></label>
+              <label>HR source<input data-liss-source="vantageStrap" data-liss-key="hrSource" data-liss-type="text" type="text" placeholder="strap"></label>
+            </div>
+            <div class="liss-zone-grid">
+              <span>Zone</span><span>Minutes</span><span>Percent</span>
+              <strong>Z1</strong><input aria-label="Z1 minutes" data-liss-source="vantageStrap" data-liss-key="hrZones.z1Minutes" type="number" min="0" step="any"><input aria-label="Z1 percent" data-liss-source="vantageStrap" data-liss-key="hrZones.z1Percent" type="number" min="0" max="100" step="any">
+              <strong>Z2</strong><input aria-label="Z2 minutes" data-liss-source="vantageStrap" data-liss-key="hrZones.z2Minutes" type="number" min="0" step="any"><input aria-label="Z2 percent" data-liss-source="vantageStrap" data-liss-key="hrZones.z2Percent" type="number" min="0" max="100" step="any">
+              <strong>Z3</strong><input aria-label="Z3 minutes" data-liss-source="vantageStrap" data-liss-key="hrZones.z3Minutes" type="number" min="0" step="any"><input aria-label="Z3 percent" data-liss-source="vantageStrap" data-liss-key="hrZones.z3Percent" type="number" min="0" max="100" step="any">
+              <strong>Z4</strong><input aria-label="Z4 minutes" data-liss-source="vantageStrap" data-liss-key="hrZones.z4Minutes" type="number" min="0" step="any"><input aria-label="Z4 percent" data-liss-source="vantageStrap" data-liss-key="hrZones.z4Percent" type="number" min="0" max="100" step="any">
+              <strong>Z5</strong><input aria-label="Z5 minutes" data-liss-source="vantageStrap" data-liss-key="hrZones.z5Minutes" type="number" min="0" step="any"><input aria-label="Z5 percent" data-liss-source="vantageStrap" data-liss-key="hrZones.z5Percent" type="number" min="0" max="100" step="any">
+            </div>
+            <div class="sensor-artifact-box">
+              <label class="checkbox-card"><input id="lissMaxHrArtifact" type="checkbox"> Mark NOOP maximum HR as a suspected sensor artefact</label>
+              <label>Artefact reason<input id="lissMaxHrArtifactReason" type="text" placeholder="Strap moved at end of session"></label>
+              <p class="liss-source-note">The raw maximum HR is retained. When marked as artefact, it is excluded from classification and maximum-HR recovery guardrails.</p>
+            </div>
+          </details>
+
+          <details class="liss-source-card">
+            <summary>Watch / device exercise summary</summary>
+            <div class="form-grid liss-metrics-grid">
+              <label>Date/time<input data-liss-source="watchDevice" data-liss-key="dateTime" data-liss-type="text" type="text" placeholder="2026-07-24T18:44:38+01:00"></label>
+              <label>Duration<input data-liss-source="watchDevice" data-liss-key="duration" data-liss-type="text" type="text" placeholder="47:58"></label>
+              <label>Distance km<input data-liss-source="watchDevice" data-liss-key="distanceKm" type="number" min="0" step="any" placeholder="4.06"></label>
+              <label>Calories<input data-liss-source="watchDevice" data-liss-key="calories" type="number" min="0" step="any" placeholder="313"></label>
+              <label>Average HR<input data-liss-source="watchDevice" data-liss-key="avgHr" type="number" min="0" step="any" placeholder="110"></label>
+              <label>Maximum HR<input data-liss-source="watchDevice" data-liss-key="maxHr" type="number" min="0" step="any" placeholder="125"></label>
+              <label>Minimum HR<input data-liss-source="watchDevice" data-liss-key="minHr" type="number" min="0" step="any" placeholder="74"></label>
+              <label>Average speed km/h<input data-liss-source="watchDevice" data-liss-key="avgSpeedKmh" type="number" min="0" step="any" placeholder="5.08"></label>
+              <label>Fastest speed km/h<input data-liss-source="watchDevice" data-liss-key="fastestSpeedKmh" type="number" min="0" step="any" placeholder="5.76"></label>
+              <label>Average pace /km<input data-liss-source="watchDevice" data-liss-key="avgPacePerKm" data-liss-type="text" type="text" placeholder="11:48"></label>
+              <label>Fastest pace /km<input data-liss-source="watchDevice" data-liss-key="fastestPacePerKm" data-liss-type="text" type="text" placeholder="10:25"></label>
+              <label>Slowest pace /km<input data-liss-source="watchDevice" data-liss-key="slowestPacePerKm" data-liss-type="text" type="text" placeholder="28:34"></label>
+              <label>Steps<input data-liss-source="watchDevice" data-liss-key="steps" type="number" min="0" step="1" placeholder="4675"></label>
+              <label>Average cadence<input data-liss-source="watchDevice" data-liss-key="avgCadence" type="number" min="0" step="any" placeholder="97"></label>
+              <label>Maximum cadence<input data-liss-source="watchDevice" data-liss-key="maxCadence" type="number" min="0" step="any" placeholder="110"></label>
+              <label>Minimum cadence<input data-liss-source="watchDevice" data-liss-key="minCadence" type="number" min="0" step="any" placeholder="18"></label>
+              <label>Pauses<input data-liss-source="watchDevice" data-liss-key="pauses" type="number" min="0" step="1" placeholder="0"></label>
+              <label>Pause length<input data-liss-source="watchDevice" data-liss-key="pauseLength" data-liss-type="text" type="text" placeholder="00:00:00"></label>
+              <label>Calories/min max<input data-liss-source="watchDevice" data-liss-key="caloriesPerMinute.max" type="number" min="0" step="any" placeholder="7.3"></label>
+              <label>Calories/min average<input data-liss-source="watchDevice" data-liss-key="caloriesPerMinute.average" type="number" min="0" step="any" placeholder="6.5"></label>
+              <label>Calories/min minimum<input data-liss-source="watchDevice" data-liss-key="caloriesPerMinute.minimum" type="number" min="0" step="any" placeholder="2.6"></label>
+            </div>
+          </details>
+
+          <details class="liss-source-card">
+            <summary>Treadmill / machine console</summary>
+            <div class="form-grid liss-metrics-grid">
+              <label>Total time<input data-liss-source="treadmillMachine" data-liss-key="totalTime" data-liss-type="text" type="text" placeholder="47:00"></label>
+              <label>Distance km<input data-liss-source="treadmillMachine" data-liss-key="distanceKm" type="number" min="0" step="any" placeholder="4.33"></label>
+              <label>Distance miles<input data-liss-source="treadmillMachine" data-liss-key="distanceMiles" type="number" min="0" step="any" placeholder="2.72"></label>
+              <label>Calories<input data-liss-source="treadmillMachine" data-liss-key="calories" type="number" min="0" step="any" placeholder="444"></label>
+              <label>Vertical distance ft<input data-liss-source="treadmillMachine" data-liss-key="verticalDistanceFeet" type="number" min="0" step="any" placeholder="686"></label>
+              <label>Average watts<input data-liss-source="treadmillMachine" data-liss-key="avgWatts" type="number" min="0" step="any" placeholder="138"></label>
+              <label>Average METs<input data-liss-source="treadmillMachine" data-liss-key="avgMets" type="number" min="0" step="any" placeholder="2.5"></label>
+              <label>Maximum speed km/h<input data-liss-source="treadmillMachine" data-liss-key="maxSpeedKmh" type="number" min="0" step="any" placeholder="6.3"></label>
+              <label>Average speed km/h<input data-liss-source="treadmillMachine" data-liss-key="avgSpeedKmh" type="number" min="0" step="any" placeholder="5.8"></label>
+              <label>Maximum speed mph<input data-liss-source="treadmillMachine" data-liss-key="maxSpeedMph" type="number" min="0" step="any" placeholder="4.0"></label>
+              <label>Average speed mph<input data-liss-source="treadmillMachine" data-liss-key="avgSpeedMph" type="number" min="0" step="any" placeholder="3.5"></label>
+              <label>Average pace min/km<input data-liss-source="treadmillMachine" data-liss-key="avgPacePerKm" data-liss-type="text" type="text" placeholder="10:21"></label>
+              <label>Maximum pace min/mi<input data-liss-source="treadmillMachine" data-liss-key="maxPacePerMile" data-liss-type="text" type="text" placeholder="15:00"></label>
+              <label>Average pace min/mi<input data-liss-source="treadmillMachine" data-liss-key="avgPacePerMile" data-liss-type="text" type="text" placeholder="17:08"></label>
+              <label>Maximum incline %<input data-liss-source="treadmillMachine" data-liss-key="maxInclinePercent" type="number" min="0" step="any" placeholder="6.0"></label>
+              <label>Average incline %<input data-liss-source="treadmillMachine" data-liss-key="avgInclinePercent" type="number" min="0" step="any" placeholder="5.3"></label>
+              <label>Average machine HR<input data-liss-source="treadmillMachine" data-liss-key="avgHr" type="number" min="0" step="any" placeholder="87"></label>
+              <label>Maximum machine HR<input data-liss-source="treadmillMachine" data-liss-key="maxHr" type="number" min="0" step="any" placeholder="97"></label>
+              <label>StairMaster level<input data-liss-source="treadmillMachine" data-liss-key="stairmasterLevel" type="number" min="0" step="any"></label>
+            </div>
+          </details>
+        </details>
+
+        <section class="liss-media-section">
+          <div class="panel-heading compact-heading">
+            <div><p class="eyebrow">Workout evidence</p><h3>Screenshots and photos</h3></div>
+            <span id="lissImageCount" class="image-count">0 images</span>
+          </div>
+          <p>Use the camera for a machine console or choose screenshots from the camera roll. Only images shown below are included in the Coach Pack. Each image must be assigned to its real source; VANTAGE never defaults a gallery screenshot to a generic watch.</p>
+          <p class="liss-source-note"><strong>Mixed gallery uploads:</strong> VANTAGE asks you to label every selected image before it is saved. Screenshot values remain evidence until a Coach analysis is imported and you confirm them. Use the one-tap review in History to populate all clear image-only values.</p>
+          <div class="liss-media-actions">
+            <button id="openLissCameraButton" class="button button-primary" type="button">Open camera</button>
+            <button id="openLissGalleryButton" class="button button-ghost" type="button">Choose images</button>
+            <button id="openLissHrButton" class="button button-ghost" type="button">Add NOOP Strap summary</button>
+            <input id="lissCameraInput" class="visually-hidden-file" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif" capture="environment">
+            <input id="lissGalleryInput" class="visually-hidden-file" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif" multiple>
+            <input id="lissHrInput" class="visually-hidden-file" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif">
+          </div>
+          <p id="lissImageStatus" class="image-import-status" aria-live="polite"></p>
+          <section class="ocr-launch-panel">
+            <div>
+              <p class="eyebrow">Experimental local review</p>
+              <h3>Read each attached screenshot with OCR</h3>
+              <p>Attach each source separately, confirm its role, then run OCR on that image. Keep the screen straight, fill the frame, avoid glare and keep every label beside its value. OCR suggestions never replace existing values without your confirmation.</p>
+            </div>
+            <button id="runLissOcrButton" class="button button-ghost button-wide" type="button">Run OCR on latest image</button>
+          </section>
+
+          <section id="lissPendingMediaReview" class="liss-pending-media-review" hidden>
+            <div class="panel-heading compact-heading">
+              <div><p class="eyebrow">Before attaching</p><h3>Confirm each image source</h3></div>
+              <span id="lissPendingMediaCount" class="image-count">0 pending</span>
+            </div>
+            <label>Apply one source to all pending images
+              <select id="lissPendingApplyAllRole">
+                <option value="">Choose only when all images are the same source</option>
+                <option value="noopStrapSessionSummary">NOOP Strap session summary</option>
+                <option value="noopStrapHrZones">NOOP Strap HR zones</option>
+                <option value="noopSessionStreamSaved">NOOP saved session / route stream</option>
+                <option value="watchDeviceExerciseSummary">Watch/device exercise summary</option>
+                <option value="watchDevicePaceSpeedCadence">Watch pace/speed/cadence</option>
+                <option value="treadmillMachineConsole">Treadmill/machine console</option>
+                <option value="outdoorWalkGpsSummary">Outdoor walk GPS summary</option>
+                <option value="preLissBloodPressure">Pre-LISS blood pressure</option>
+                <option value="postLissBloodPressure">Post-LISS blood pressure</option>
+                <option value="hydrationEvidence">Hydration evidence</option>
+                <option value="nutritionEvidence">Nutrition evidence</option>
+                <option value="sessionNotes">Session notes</option>
+                <option value="unknown">Other / unsure</option>
+              </select>
+            </label>
+            <div id="lissPendingMediaList" class="liss-pending-media-list"></div>
+            <div class="liss-pending-media-actions">
+              <button id="savePendingLissMediaButton" class="button button-primary" type="button">Attach labelled images</button>
+              <button id="cancelPendingLissMediaButton" class="button button-ghost" type="button">Cancel</button>
+            </div>
+          </section>
+          <p class="camera-storage-note">Android PWAs cannot force a photo into DCIM/Camera. Use ↗ on an attached image to send it to Photos, Gallery or Files, or ↓ to keep a copy in Downloads. For guaranteed camera-roll redundancy, take the photo in the phone Camera app and then choose it here.</p>
+          <div id="lissMediaPreview" class="liss-media-preview"><div class="empty-state compact-empty">No images attached.</div></div>
+        </section>
+
+        <button id="completeLissButton" class="button button-success button-wide" type="button">Finish LISS</button>
+        <p class="liss-share-note">The session is saved and closed first. VANTAGE then attempts the Coach Pack export separately, so an export/evidence problem can never trap an active LISS session.</p>
+      </section>
+
+
+
+
+      <section id="recoverySessionPanel" class="panel recovery-session-panel" hidden>
+        <div class="panel-heading">
+          <div><p class="eyebrow">Recovery session</p><h3>Yoga / recovery</h3></div>
+          <span class="source-badge">Manual session</span>
+        </div>
+        <p>Yoga and mobility are saved as recovery sessions, not fake strength exercises.</p>
+        <div class="form-grid">
+          <label>Activity
+            <select id="recoverySessionActivity">
+              <option value="Yoga">Yoga</option>
+              <option value="Mobility">Mobility</option>
+              <option value="Breathwork">Breathwork</option>
+              <option value="Recovery session">Other recovery session</option>
+            </select>
+          </label>
+          <label>Duration (minutes)<input id="recoverySessionDuration" type="number" min="1" max="600" step="1" inputmode="numeric" placeholder="66"></label>
+          <label>Start time (optional)<input id="recoverySessionStartTime" type="time"></label>
+          <label>End time (optional)<input id="recoverySessionEndTime" type="time"></label>
+          <label class="full-width">Notes<textarea id="recoverySessionNotes" rows="3" placeholder="Mobility, breathwork, how it felt…"></textarea></label>
+        </div>
+        <section class="workout-hr-panel recovery-hr-panel">
+          <div class="panel-heading compact-heading">
+            <div><p class="eyebrow">Current-session evidence</p><h3>NOOP Strap HR summary</h3></div>
+            <span id="recoveryHrImageCount" class="image-count">0 images</span>
+          </div>
+          <p>Add the Yoga/Recovery HR summary. It is always treated as current-session evidence, not a reference image.</p>
+          <div class="data-actions">
+            <button id="chooseRecoveryHrButton" class="button button-primary" type="button">Choose HR screenshot</button>
+            <button id="runRecoveryHrOcrButton" class="button button-ghost" type="button">Run OCR on latest image</button>
+            <input id="recoveryHrInput" class="visually-hidden-file" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif" multiple>
+          </div>
+          <details class="workout-hr-fields">
+            <summary>Review confirmed HR values</summary>
+            <div class="form-grid">
+              <label>Activity shown<input data-recovery-hr-key="activityShown" type="text" placeholder="Yoga"></label>
+              <label>Time range<input data-recovery-hr-key="timeRange" type="text" placeholder="08:55–10:01"></label>
+              <label>Duration minutes<input data-recovery-hr-key="durationMinutes" type="number" min="0" step="any"></label>
+              <label>Average HR<input data-recovery-hr-key="avgHr" type="number" min="0" step="any"></label>
+              <label>Maximum HR<input data-recovery-hr-key="maxHr" type="number" min="0" step="any"></label>
+              <label>Minimum HR<input data-recovery-hr-key="minHr" type="number" min="0" step="any"></label>
+              <label>Calories<input data-recovery-hr-key="calories" type="number" min="0" step="any"></label>
+              <label>Effort<input data-recovery-hr-key="effort" type="number" min="0" step="0.1"></label>
+              <label>Z1 minutes<input data-recovery-hr-key="hrZones.z1Minutes" type="number" min="0" step="any"></label>
+              <label>Z1 %<input data-recovery-hr-key="hrZones.z1Percent" type="number" min="0" max="100" step="any"></label>
+              <label>Z2 minutes<input data-recovery-hr-key="hrZones.z2Minutes" type="number" min="0" step="any"></label>
+              <label>Z2 %<input data-recovery-hr-key="hrZones.z2Percent" type="number" min="0" max="100" step="any"></label>
+              <label>Z3 minutes<input data-recovery-hr-key="hrZones.z3Minutes" type="number" min="0" step="any"></label>
+              <label>Z3 %<input data-recovery-hr-key="hrZones.z3Percent" type="number" min="0" max="100" step="any"></label>
+              <label>Z4 minutes<input data-recovery-hr-key="hrZones.z4Minutes" type="number" min="0" step="any"></label>
+              <label>Z4 %<input data-recovery-hr-key="hrZones.z4Percent" type="number" min="0" max="100" step="any"></label>
+              <label>Z5 minutes<input data-recovery-hr-key="hrZones.z5Minutes" type="number" min="0" step="any"></label>
+              <label>Z5 %<input data-recovery-hr-key="hrZones.z5Percent" type="number" min="0" max="100" step="any"></label>
+            </div>
+          </details>
+          <p id="recoveryHrStatus" class="image-import-status" aria-live="polite"></p>
+          <div id="recoveryHrPreview" class="liss-media-preview"><div class="empty-state compact-empty">No recovery HR screenshot attached.</div></div>
+        </section>
+        <button id="completeRecoverySessionButton" class="button button-success button-wide" type="button">Finish recovery &amp; export Coach Pack</button>
+      </section>
+
+      <div id="workoutExerciseToolbar" class="workout-exercise-toolbar" hidden>
+        <button id="addExerciseButton" class="button button-ghost" type="button">+ Add exercise</button>
+        <button id="removeExerciseButton" class="button button-ghost" type="button">− Remove exercise</button>
+        <button id="collapseAllExercisesButton" class="button button-ghost" type="button">Collapse all</button>
+        <button id="expandAllExercisesButton" class="button button-ghost" type="button">Expand all</button>
+      </div>
+      <div id="exerciseList" class="exercise-list"></div>
+
+
+      <section id="workoutSummary" class="panel summary-panel" hidden>
+        <div class="summary-stat"><span>Exercises</span><strong id="summaryExercises">0</strong></div>
+        <div class="summary-stat"><span>Work sets</span><strong id="summarySets">0</strong></div>
+        <div class="summary-stat"><span>Volume</span><strong id="summaryVolume">0 kg</strong></div>
+        <div class="summary-stat"><span>Top e1RM</span><strong id="summaryE1rm">0 kg</strong></div>
+
+        <section class="workout-hr-panel full-width">
+          <div class="panel-heading compact-heading">
+            <div><p class="eyebrow">Session biometrics</p><h3>Workout HR summary</h3></div>
+            <span id="workoutHrImageCount" class="image-count">0 images</span>
+          </div>
+          <p>Add the end-of-session HR/effort screenshot from your strap or wearable. It is stored against this workout and included in the full Coach Pack.</p>
+          <div class="data-actions">
+            <button id="chooseWorkoutHrButton" class="button button-primary" type="button">Choose HR screenshot</button>
+            <button id="runWorkoutHrOcrButton" class="button button-ghost" type="button">Run OCR on latest HR image</button>
+            <input id="workoutHrInput" class="visually-hidden-file" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif" multiple>
+          </div>
+          <details class="workout-hr-fields">
+            <summary>Optional confirmed HR values</summary>
+            <div class="form-grid">
+              <label>Time range<input data-workout-hr-key="timeRange" type="text" placeholder="17:54–19:03"></label>
+              <label>Duration minutes<input data-workout-hr-key="durationMinutes" type="number" min="0" step="any"></label>
+              <label>Average HR<input data-workout-hr-key="avgHr" type="number" min="0" step="any"></label>
+              <label>Maximum HR<input data-workout-hr-key="maxHr" type="number" min="0" step="any"></label>
+              <label>Minimum HR<input data-workout-hr-key="minHr" type="number" min="0" step="any"></label>
+              <label>Calories<input data-workout-hr-key="calories" type="number" min="0" step="any"></label>
+              <label>Effort<input data-workout-hr-key="effort" type="number" min="0" step="any"></label>
+              <label>HR source<input data-workout-hr-key="hrSource" type="text" placeholder="strap"></label>
+              <label>Z1 minutes<input data-workout-hr-key="hrZones.z1Minutes" type="number" min="0" step="any"></label>
+              <label>Z1 %<input data-workout-hr-key="hrZones.z1Percent" type="number" min="0" max="100" step="any"></label>
+              <label>Z2 minutes<input data-workout-hr-key="hrZones.z2Minutes" type="number" min="0" step="any"></label>
+              <label>Z2 %<input data-workout-hr-key="hrZones.z2Percent" type="number" min="0" max="100" step="any"></label>
+              <label>Z3 minutes<input data-workout-hr-key="hrZones.z3Minutes" type="number" min="0" step="any"></label>
+              <label>Z3 %<input data-workout-hr-key="hrZones.z3Percent" type="number" min="0" max="100" step="any"></label>
+            </div>
+          </details>
+          <p id="workoutHrStatus" class="image-import-status" aria-live="polite"></p>
+          <div id="workoutHrPreview" class="liss-media-preview"><div class="empty-state compact-empty">No workout HR screenshot attached.</div></div>
+        </section>
+
+        <details class="workout-export-options full-width">
+          <summary>Coach Pack media options</summary>
+          <div class="checkbox-grid">
+            <label><input id="includeActiveReferencePhotosCheckbox" type="checkbox"> Include each exercise’s active reference image</label>
+            <label><input id="includeArchivedReferencePhotosCheckbox" type="checkbox"> Include archived reference images (normally leave off)</label>
+          </div>
+          <p class="camera-storage-note">Current-session exercise images and the workout HR screenshot are always included. Old references are excluded unless selected here.</p>
+        </details>
+
+        <details class="workout-checks-panel full-width">
+          <summary>Optional pre-workout BP check</summary>
+          <div class="form-grid">
+            <label>Time<input id="preWorkoutBpTime" type="time"></label>
+            <label>Systolic<input id="preWorkoutSystolic" type="number" min="0" step="1"></label>
+            <label>Diastolic<input id="preWorkoutDiastolic" type="number" min="0" step="1"></label>
+            <label>Pulse<input id="preWorkoutPulse" type="number" min="0" step="1"></label>
+          </div>
+        </details>
+
+        <label class="full-width">
+          Session notes
+          <textarea id="sessionNotes" rows="3" placeholder="Performance, pain, BP watch, readiness notes…"></textarea>
+        </label>
+        <button id="completeWorkoutButton" class="button button-success button-wide">Finish session &amp; export full Coach Pack</button>
+      </section>
+    </section>
+
+    <section id="mealsScreen" class="screen" data-screen="meals">
+      <div class="screen-heading">
+        <div>
+          <p class="eyebrow">Nutrition</p>
+          <h2>Meal log</h2>
+        </div>
+        <button class="button button-ghost button-small" data-coach-context="meals">Ask Alex</button>
+      </div>
+
+      <section class="macro-strip" id="macroStrip">
+        <div><span>Protein</span><strong id="macroProtein">0 g</strong></div>
+        <div><span>Carbs</span><strong id="macroCarbs">0 g</strong></div>
+        <div><span>Fat</span><strong id="macroFat">0 g</strong></div>
+        <div><span>Energy</span><strong id="macroCalories">0 kcal</strong></div>
+      </section>
+
+      <section id="macroGuidancePanel" class="panel macro-guidance-panel">
+        <div class="panel-heading">
+          <div><p class="eyebrow">Alex macro file</p><h3>Today’s position</h3></div>
+          <span id="macroSourceBadge" class="source-badge">No data</span>
+        </div>
+        <div id="macroTargetGrid" class="macro-target-grid"><div class="empty-state compact-empty">Import today’s Alex macro Markdown file to see targets, remaining allowance and meal guidance.</div></div>
+        <div id="macroCoachingNotes" class="macro-coaching-notes"></div>
+        <button id="whatCanIHaveNextButton" class="button button-primary button-wide" type="button">What can I have next?</button>
+        <div id="nextMealSuggestion" class="next-meal-suggestion" aria-live="polite"></div>
+      </section>
+
+      <section class="panel macro-import-panel">
+        <div class="panel-heading">
+          <div><p class="eyebrow">Macro thread bridge</p><h3>Daily macro Markdown</h3></div>
+        </div>
+        <p>Import a <code>.md</code> file created from your macro thread, or download today’s current food and macro log to send back into that thread.</p>
+        <div class="data-actions macro-import-actions">
+          <label class="button button-primary button-wide file-button">Choose macro Markdown<input id="macroMarkdownInput" type="file" accept=".md,text/markdown,text/plain"></label>
+          <button id="downloadMacroMarkdownButton" class="button button-ghost button-wide" type="button">Download today’s Macro Markdown</button>
+          <button id="copyMacroFilePromptButton" class="button button-ghost button-wide" type="button">Copy macro file-generation prompt</button>
+        </div>
+        <label class="checkbox-card macro-replace-option"><input id="replaceMacroDayCheckbox" type="checkbox" checked> Replace existing meals and summary for the imported date</label>
+        <div id="macroMarkdownStatus" class="import-status" aria-live="polite"><div class="empty-state">No macro Markdown file selected.</div></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Quick entry</p>
+            <h3>Add meal</h3>
+          </div>
+          <button id="repeatLastMealButton" class="button button-ghost button-small">Repeat last</button>
+        </div>
+        <form id="mealForm" class="form-grid">
+          <label>Meal number<input name="mealNumber" type="number" min="1" value="1" required></label>
+          <label>Time<input name="time" type="time" required></label>
+          <label class="full-width">Foods<textarea name="foods" rows="3" placeholder="204 g drained tuna, 250 g cooked potato, greens, 10 g olive oil" required></textarea></label>
+          <label>Protein (g)<input name="protein" type="number" min="0" step="0.1" value="0"></label>
+          <label>Carbs (g)<input name="carbs" type="number" min="0" step="0.1" value="0"></label>
+          <label>Fat (g)<input name="fat" type="number" min="0" step="0.1" value="0"></label>
+          <label>Calories (auto 4/4/9)<input name="calories" type="number" min="0" step="1" value="0"></label>
+          <label class="full-width">Sodium / hydration note<input name="sodiumNote" type="text" placeholder="Salted normally; 500 ml water"></label>
+          <div class="checkbox-row full-width">
+            <label><input name="preWorkout" type="checkbox"> Pre-workout</label>
+            <label><input name="postWorkout" type="checkbox"> Post-workout</label>
+            <label><input name="preBed" type="checkbox"> Pre-bed</label>
+          </div>
+          <button class="button button-primary button-wide full-width" type="submit">Save meal</button>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading"><h3>Today’s meals</h3></div>
+        <div id="mealList" class="stack-list"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading"><div><p class="eyebrow">From the workout journal</p><h3>Daily nutrition history</h3></div></div>
+        <div id="nutritionHistory" class="stack-list"></div>
+      </section>
+    </section>
+
+    <section id="vitalsScreen" class="screen" data-screen="vitals">
+      <div class="screen-heading">
+        <div>
+          <p class="eyebrow">Recovery inputs</p>
+          <h2>Vitals and readiness</h2>
+        </div>
+        <button class="button button-ghost button-small" data-coach-context="readiness">Ask Alex</button>
+      </div>
+
+      <div id="readinessPreview" class="readiness-card readiness-neutral compact">
+        <div class="readiness-orb">–</div>
+        <div class="readiness-copy">
+          <p class="eyebrow">Preview</p>
+          <h3>No data entered</h3>
+          <p>The decision updates as you type.</p>
+        </div>
+      </div>
+
+      <section class="panel vitals-import-panel">
+        <div class="panel-heading">
+          <div><p class="eyebrow">From another Alex thread</p><h3>Import vitals Markdown</h3></div>
+        </div>
+        <p>Upload a VANTAGE <code>.md</code> file and the app will fill the form below. It will not save anything until you review the readings and press <strong>Save vitals</strong>.</p>
+        <div class="data-actions vitals-import-actions">
+          <label class="button button-primary button-wide file-button">Choose vitals Markdown<input id="vitalsMarkdownInput" type="file" accept=".md,text/markdown,text/plain"></label>
+          <button id="copyVitalsFilePromptButton" class="button button-ghost button-wide" type="button">Copy file-generation prompt</button>
+          <button id="downloadVitalsExampleButton" class="button button-ghost button-wide" type="button">Download example file</button>
+        </div>
+        <div id="vitalsMarkdownStatus" class="import-status" aria-live="polite"><div class="empty-state">No Markdown file selected.</div></div>
+      </section>
+
+      <form id="vitalsForm" class="panel form-grid">
+        <label>Date<input name="date" type="date" required></label>
+        <label>NOOP recovery (%)<input name="recovery" type="number" min="0" max="100" step="any" inputmode="decimal"></label>
+        <label>Charge (%)<input name="charge" type="number" min="0" max="100" step="any" inputmode="decimal"></label>
+        <label>Rest score<input name="restScore" type="number" min="0" max="100" step="any" inputmode="decimal"></label>
+        <label>Status<input name="status" type="text" placeholder="Solid"></label>
+        <label>Guidance<input name="guidance" type="text" placeholder="Maintain / Rest"></label>
+        <label>Synthesis state
+          <select name="synthesis"><option value="">Not entered</option><option>Peak</option><option>Building</option><option>Maintain</option><option>Steady</option><option>Balanced</option><option>Primed</option><option>Solid</option><option>Low</option><option>Draining</option><option>Depleted</option></select>
+        </label>
+        <label>HRV (ms)<input name="hrv" type="number" min="0" step="any" inputmode="decimal"></label>
+        <label>HRV baseline (ms)<input name="hrvBaseline" type="number" min="0" step="any" inputmode="decimal" placeholder="Unknown unless supplied"></label>
+        <label>HRV delta from baseline (ms)<input name="hrvDeltaFromBaseline" type="number" step="any" inputmode="decimal" placeholder="e.g. -18"></label>
+        <label>HRV baseline status<select name="hrvBaselineStatus"><option value="unknown">Unknown</option><option value="at-baseline">At baseline</option><option value="above-baseline">Above baseline</option><option value="below-baseline">Below baseline</option><option value="known">Numeric baseline known</option></select></label>
+        <label>Resting HR (bpm)<input name="restingHr" type="number" min="0" step="any" inputmode="decimal"></label>
+        <label>RHR baseline (bpm)<input name="rhrBaseline" type="number" min="0" step="any" inputmode="decimal" placeholder="Unknown unless supplied"></label>
+        <label>RHR delta from baseline (bpm)<input name="rhrDeltaFromBaseline" type="number" step="any" inputmode="decimal" placeholder="e.g. +3"></label>
+        <label>RHR baseline status<select name="rhrBaselineStatus"><option value="unknown">Unknown</option><option value="at-baseline">At baseline</option><option value="above-baseline">Above baseline</option><option value="below-baseline">Below baseline</option><option value="known">Numeric baseline known</option></select></label>
+        <label>Stress score<input name="stress" type="number" min="0" max="100" step="any" inputmode="decimal"></label>
+        <label>Stress band<input name="stressBand" type="text" placeholder="High / Medium / Low"></label>
+        <label>Respiratory rate (rpm)<input name="respiratoryRate" type="number" min="5" max="60" step="any" inputmode="decimal"></label>
+        <label>Sleep duration (hours)<input name="sleepHours" type="number" min="0" max="24" step="any" inputmode="decimal"></label>
+        <label>Sleep performance (%)<input name="sleepPerformance" type="number" min="0" max="100" step="any" inputmode="decimal"></label>
+        <label>Sleep efficiency (%)<input name="sleepEfficiency" type="number" min="0" max="100" step="any" inputmode="decimal"></label>
+        <label>Sleep debt (hours)<input name="sleepDebt" type="number" min="0" max="24" step="any" inputmode="decimal"></label>
+        <label>Systolic BP<input name="systolic" type="number" min="0" step="any" inputmode="decimal"></label>
+        <label>Diastolic BP<input name="diastolic" type="number" min="0" step="any" inputmode="decimal"></label>
+        <label>Cuff pulse (bpm)<input name="pulse" type="number" min="0" step="any" inputmode="decimal" placeholder="Keep separate from NOOP RHR"></label>
+        <label>Weight (kg)<input name="weight" type="number" min="0" step="any" inputmode="decimal"></label>
+        <label>Daily hydration consumed (L)<input name="dailyHydrationConsumedLitres" type="number" min="0" max="20" step="any" inputmode="decimal"></label>
+        <label>Daily hydration target (L)<input name="dailyHydrationTargetLitres" type="number" min="0" max="20" step="any" inputmode="decimal"></label>
+        <label>User feeling
+          <select name="feeling"><option value="">Not entered</option><option value="good">Good</option><option value="average">Average</option><option value="poor">Poor</option></select>
+        </label>
+        <label class="full-width">Soreness / symptoms / notes<textarea name="notes" rows="3" placeholder="Chest soreness, headache, dizziness, joint pain…"></textarea></label>
+        <label class="checkbox-card full-width"><input name="symptoms" type="checkbox"> Symptoms present — force recovery-only recommendation</label>
+
+        <div class="alert alert-info full-width"><strong>Recovery actions live in Recovery.</strong> Importing/saving vitals no longer creates or selects recovery activities.</div>
+
+        <button class="button button-primary button-wide full-width" type="submit">Save vitals</button>
+      </form>
+
+      <p class="medical-note">Decision support only. VANTAGE does not diagnose or replace medical advice. Re-check unusual readings using your normal monitoring process.</p>
+
+      <section class="panel">
+        <div class="panel-heading"><h3>Recent readings</h3></div>
+        <div id="vitalsHistory" class="stack-list"></div>
+      </section>
+    </section>
+
+
+    <section id="recoveryScreen" class="screen" data-screen="recovery">
+      <div class="screen-heading">
+        <div>
+          <p class="eyebrow">Recovery workload</p>
+          <h2>Recovery &amp; stressors</h2>
+        </div>
+        <button class="button button-ghost button-small" data-coach-context="recovery">Ask Alex</button>
+      </div>
+
+      <section class="panel">
+        <div class="panel-heading">
+          <div><p class="eyebrow">Today</p><h3>Decision and actual actions</h3></div>
+        </div>
+        <div id="recoveryDayDecision" class="decision-summary"></div>
+      </section>
+
+      <div id="recoverySummary" class="metric-grid recovery-summary"></div>
+
+      <section class="panel default-recovery-routine-panel">
+        <div class="panel-heading"><div><p class="eyebrow">Standing routine</p><h3>Default recovery routine today</h3></div></div>
+        <p>Defaults are plans, not completed actions. Mark each item completed or skipped; manual entries can still modify the duration.</p>
+        <div id="defaultRecoveryRoutineList" class="stack-list"></div>
+      </section>
+
+      <section class="panel recovery-explainer">
+        <div class="panel-heading">
+          <div><p class="eyebrow">Manual entries</p><h3>Log recovery accurately</h3></div>
+        </div>
+        <p>Choose the action, enter the duration in minutes, add any useful context and save it. Sauna, steam and cold exposure remain physiological stressors rather than automatically counting as free recovery.</p>
+      </section>
+
+      <div id="recoveryActivitySections" class="recovery-activity-sections"></div>
+
+      <section class="panel">
+        <div class="panel-heading"><div><p class="eyebrow">Today</p><h3>Saved recovery actions</h3></div></div>
+        <div id="recoveryTodayList" class="stack-list"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading"><div><p class="eyebrow">Recent</p><h3>Recovery history</h3></div></div>
+        <div id="recoveryRecentList" class="stack-list"></div>
+      </section>
+    </section>
+
+
+    <section id="biolabScreen" class="screen" data-screen="biolab">
+      <div class="screen-heading">
+        <div>
+          <p class="eyebrow">VANTAGE BioLab</p>
+          <h2>Bloodwork</h2>
+        </div>
+        <button class="button button-ghost button-small" data-coach-context="biolab">Ask Alex</button>
+      </div>
+
+      <div id="bloodworkSummary" class="metric-grid"></div>
+
+      <section class="panel biolab-import-panel">
+        <div class="panel-heading">
+          <div><p class="eyebrow">Local-first import</p><h3>Add bloodwork or analysis</h3></div>
+        </div>
+        <p>Generate the structured Markdown in your Bloodwork Analyzer thread, then import it here. VANTAGE stores the original file, issuing-lab units, reference ranges and analysis locally.</p>
+        <div class="data-actions">
+          <button id="chooseBloodworkButton" class="button button-primary button-wide" type="button">Choose bloodwork Markdown</button>
+          <button id="chooseBloodAnalysisButton" class="button button-ghost button-wide" type="button">Choose analysis Markdown</button>
+          <button id="copyBloodworkPromptButton" class="button button-ghost button-wide" type="button">Copy Bloodwork Analyzer prompt</button>
+          <input id="bloodworkMarkdownInput" class="visually-hidden-file" type="file" accept=".md,text/markdown,text/plain">
+          <input id="bloodAnalysisMarkdownInput" class="visually-hidden-file" type="file" accept=".md,text/markdown,text/plain">
+        </div>
+        <div id="bloodworkImportStatus" class="import-status" aria-live="polite"><div class="empty-state">No bloodwork file selected.</div></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading"><div><p class="eyebrow">Latest panel</p><h3>Summary and imported analysis</h3></div></div>
+        <div id="bloodworkLatest"><div class="empty-state">Import a VANTAGE bloodwork Markdown file to begin BioLab tracking.</div></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading"><div><p class="eyebrow">Longitudinal view</p><h3>Marker trend</h3></div></div>
+        <label>Marker<select id="bloodMarkerSelect"></select></label>
+        <div id="bloodMarkerTrend"><div class="empty-state">Two dated results in the same unit are needed for a trend.</div></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading"><div><p class="eyebrow">Archive</p><h3>Bloodwork history</h3></div></div>
+        <div id="bloodworkList" class="history-list"></div>
+      </section>
+
+      <p class="medical-note">Storage and decision support only. VANTAGE does not diagnose, replace the issuing laboratory report or replace GP/TRT-clinic review. Urgent symptoms or seriously abnormal results need professional assessment.</p>
+    </section>
+
+
+    <section id="metricsScreen" class="screen" data-screen="metrics">
+      <div class="screen-heading">
+        <div>
+          <p class="eyebrow">VANTAGE analytics</p>
+          <h2>Metrics</h2>
+        </div>
+        <button class="button button-ghost button-small" data-coach-context="metrics">Ask Alex</button>
+      </div>
+
+      <section class="panel metrics-controls">
+        <div class="panel-heading">
+          <div><p class="eyebrow">Analysis window</p><h3>Choose the period</h3></div>
+        </div>
+        <div class="form-grid">
+          <label>Time period
+            <select id="metricsRangeSelect">
+              <option value="7d">Last 7 days</option>
+              <option value="28d" selected>Last 28 days</option>
+              <option value="90d">Last 90 days</option>
+              <option value="365d">Last year</option>
+              <option value="all">All history</option>
+            </select>
+          </label>
+          <label>1RM formula
+            <select id="metricsFormulaSelect">
+              <option value="epley">Epley</option>
+              <option value="brzycki">Brzycki</option>
+              <option value="lander">Lander</option>
+            </select>
+          </label>
+        </div>
+        <p class="metric-footnote">All calculations use your local VANTAGE history. Warm-ups are excluded from hard-set and hypertrophy-quality metrics.</p>
+      </section>
+
+      <div id="metricsOverview" class="metric-grid metrics-overview"></div>
+
+      <details class="panel analytics-section" open>
+        <summary><span><small>Progression</small>Strength &amp; estimated 1RM</span></summary>
+        <div class="analytics-body">
+          <label>Exercise<select id="metricsExerciseSelect"></select></label>
+          <div id="metricsStrengthSummary" class="metric-grid"></div>
+          <div id="metricsStrengthChart" class="chart-shell"></div>
+          <div id="metricsStrengthHistory" class="compact-history"></div>
+          <p class="metric-footnote">Estimated 1RM is a model, not a tested maximum. Projection is a simple 28-day linear trend and is hidden when there is too little data.</p>
+        </div>
+      </details>
+
+      <details class="panel analytics-section" open>
+        <summary><span><small>Workload</small>Volume load &amp; weekly trend</span></summary>
+        <div class="analytics-body">
+          <div id="metricsLoadChart" class="chart-shell"></div>
+          <div id="metricsLoadTable" class="analytics-list"></div>
+        </div>
+      </details>
+
+      <details class="panel analytics-section" open>
+        <summary><span><small>Distribution</small>Muscle-group workload</span></summary>
+        <div class="analytics-body">
+          <div id="metricsMuscleMode" class="segmented-control metrics-mode" role="group" aria-label="Muscle distribution measure">
+            <button type="button" data-muscle-mode="sets" class="active">Sets</button>
+            <button type="button" data-muscle-mode="volume">Volume</button>
+            <button type="button" data-muscle-mode="effectiveReps">Effective reps</button>
+          </div>
+          <div id="metricsMuscleChart" class="bar-chart"></div>
+          <div id="metricsMuscleTable" class="analytics-list"></div>
+        </div>
+      </details>
+
+      <details class="panel analytics-section" open>
+        <summary><span><small>Hypertrophy</small>Set quality &amp; proximity to failure</span></summary>
+        <div class="analytics-body">
+          <div id="metricsHypertrophySummary" class="metric-grid"></div>
+          <div id="metricsRpeChart" class="bar-chart"></div>
+          <p class="metric-footnote"><strong>Effective reps are an estimate, not an exact biological measurement.</strong> VANTAGE uses a transparent proximity-to-failure heuristic based on the final five reps near failure. It is useful for trends, not as a verdict on a set.</p>
+        </div>
+      </details>
+
+      <details class="panel analytics-section" open>
+        <summary><span><small>Fuel &amp; performance</small>Macros, calories, output &amp; PBs</span></summary>
+        <div class="analytics-body">
+          <div class="form-grid">
+            <label>Session family
+              <select id="metricsFuelSessionFamilySelect"></select>
+            </label>
+            <label>Fuel window
+              <select id="metricsFuelWindowSelect">
+                <option value="same-day">Workout day</option>
+                <option value="previous-day">Previous day</option>
+                <option value="rolling-3d">3-day rolling average</option>
+              </select>
+            </label>
+            <label>Chart nutrient
+              <select id="metricsFuelMetricSelect">
+                <option value="calories">Calories</option>
+                <option value="carbs">Carbohydrates</option>
+                <option value="protein">Protein</option>
+                <option value="fat">Fat</option>
+                <option value="carbPct">Carbohydrate %</option>
+                <option value="proteinPct">Protein %</option>
+                <option value="fatPct">Fat %</option>
+              </select>
+            </label>
+            <label>Performance output
+              <select id="metricsFuelOutputSelect">
+                <option value="sessionPerformanceIndex">Normalised session performance</option>
+                <option value="volumePerExercise">Work-set volume per exercise</option>
+                <option value="volumePerSet">Work-set volume per set</option>
+                <option value="totalVolume">Total work-set volume</option>
+              </select>
+            </label>
+          </div>
+          <div id="metricsFuelSummary" class="metric-grid"></div>
+          <div id="metricsFuelChart" class="chart-shell"></div>
+          <div id="metricsFuelInsight"></div>
+          <div id="metricsFuelTable" class="analytics-list"></div>
+          <p class="metric-footnote"><strong>Association is not causation.</strong> This compares nutrition with the selected workout family, so a Back session still matches when one exercise is added or removed. The normalised session score uses the median performance change across exercises with comparable prior history and keeps different machine identities separate where recorded.</p>
+        </div>
+      </details>
+
+      <details class="panel analytics-section" data-feature-section="bodyMeasurements" open>
+        <summary><span><small>Body composition</small>Weight &amp; measurements</span></summary>
+        <div class="analytics-body">
+          <div id="metricsNutritionSummary" class="metric-grid"></div>
+          <div id="metricsWeightChart" class="chart-shell"></div>
+
+          <form id="bodyMeasurementForm" class="measurement-form">
+            <div class="panel-heading"><div><p class="eyebrow">Manual measurement</p><h3>Add body data</h3></div></div>
+            <div class="form-grid">
+              <label>Date<input name="date" type="date" required></label>
+              <label>Weight (kg)<input name="weight" type="number" min="30" max="300" step="0.01"></label>
+              <label>Body fat (%)<input name="bodyFat" type="number" min="2" max="70" step="0.1"></label>
+              <label>Neck (cm)<input name="neck" type="number" min="10" max="100" step="0.1"></label>
+              <label>Chest (cm)<input name="chest" type="number" min="30" max="250" step="0.1"></label>
+              <label>Waist (cm)<input name="waist" type="number" min="30" max="250" step="0.1"></label>
+              <label>Hips (cm)<input name="hips" type="number" min="30" max="250" step="0.1"></label>
+              <label>Left arm (cm)<input name="leftArm" type="number" min="10" max="100" step="0.1"></label>
+              <label>Right arm (cm)<input name="rightArm" type="number" min="10" max="100" step="0.1"></label>
+              <label>Left thigh (cm)<input name="leftThigh" type="number" min="20" max="150" step="0.1"></label>
+              <label>Right thigh (cm)<input name="rightThigh" type="number" min="20" max="150" step="0.1"></label>
+              <label>Left calf (cm)<input name="leftCalf" type="number" min="10" max="100" step="0.1"></label>
+              <label>Right calf (cm)<input name="rightCalf" type="number" min="10" max="100" step="0.1"></label>
+            </div>
+            <label>Notes<textarea name="notes" rows="2" placeholder="Morning, fasted, same tape position…"></textarea></label>
+            <button class="button button-primary button-wide" type="submit">Save measurements</button>
+          </form>
+
+          <div class="measurement-trend-controls">
+            <label>Measurement
+              <select id="bodyMeasurementSelect">
+                <option value="weight">Weight</option>
+                <option value="bodyFat">Body fat</option>
+                <option value="waist">Waist</option>
+                <option value="chest">Chest</option>
+                <option value="neck">Neck</option>
+                <option value="hips">Hips</option>
+                <option value="leftArm">Left arm</option>
+                <option value="rightArm">Right arm</option>
+                <option value="leftThigh">Left thigh</option>
+                <option value="rightThigh">Right thigh</option>
+                <option value="leftCalf">Left calf</option>
+                <option value="rightCalf">Right calf</option>
+              </select>
+            </label>
+          </div>
+          <div id="bodyMeasurementChart" class="chart-shell"></div>
+          <div id="bodyMeasurementHistory" class="analytics-list"></div>
+        </div>
+      </details>
+
+      <details class="panel analytics-section">
+        <summary><span><small>Supplement context</small>Performance while a recorded item was active</span></summary>
+        <div class="analytics-body">
+          <label>Supplement / TRT item<select id="metricsSupplementSelect"></select></label>
+          <div id="metricsSupplementComparison"></div>
+          <p class="metric-footnote">This is observational. “Active” periods often overlap with cycle changes, calories, bodyweight and training progression, so the comparison must not be treated as proof that an item caused the result.</p>
+        </div>
+      </details>
+
+      <details class="panel analytics-section">
+        <summary><span><small>Benchmarking</small>Relative strength &amp; personal percentile</span></summary>
+        <div class="analytics-body">
+          <form id="metricsProfileForm" class="metrics-profile-form">
+            <div class="form-grid">
+              <label>Sex
+                <select name="sex"><option value="">Not set</option><option value="male">Male</option><option value="female">Female</option></select>
+              </label>
+              <label>Year of birth<input name="birthYear" type="number" min="1920" max="2020" step="1"></label>
+              <label>Benchmark bodyweight (kg)<input name="bodyweight" type="number" min="30" max="300" step="0.1" placeholder="Use latest if blank"></label>
+            </div>
+            <button class="button button-ghost button-wide" type="submit">Save benchmark profile</button>
+          </form>
+          <div id="metricsBenchmarkSummary"></div>
+          <p class="metric-footnote">VANTAGE can calculate bodyweight-relative strength and your percentile against your own history. It cannot reproduce Hevy’s population percentile without access to Hevy’s private user dataset.</p>
+        </div>
+      </details>
+
+      <details class="panel analytics-section">
+        <summary><span><small>Biometrics</small>Duration, heart rate &amp; readiness alignment</span></summary>
+        <div class="analytics-body">
+          <div id="metricsWearableSummary" class="metric-grid"></div>
+          <div id="metricsWearableChart" class="chart-shell"></div>
+          <div id="metricsReadinessSummary"></div>
+          <p class="metric-footnote">The current PWA uses biometrics already stored in LISS sessions and session timestamps. Direct Health Connect, Wear OS and Apple Health ingestion belongs in the later APK phase.</p>
+        </div>
+      </details>
+    </section>
+
+    <section id="supplementsScreen" class="screen" data-screen="supplements">
+      <div class="screen-heading">
+        <div><p class="eyebrow">Cycle context</p><h2>Supplement Suite</h2></div>
+        <button class="button button-ghost button-small" data-coach-context="supplements">Ask Alex</button>
+      </div>
+
+      <section class="panel">
+        <div class="panel-heading"><div><p class="eyebrow">Current stack</p><h3>Active items</h3></div></div>
+        <div id="activeSupplementSummary" class="stack-list"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading"><div><p class="eyebrow">Add or edit</p><h3>Supplement / TRT record</h3></div></div>
+        <form id="supplementForm" class="measurement-form">
+          <input name="id" type="hidden">
+          <div class="form-grid">
+            <label>Name<input name="name" required placeholder="Creatine monohydrate"></label>
+            <label>Category<select name="category"><option value="supplement">Supplement</option><option value="trt-medication">TRT / prescribed medication</option><option value="performance">Performance support</option><option value="recovery">Recovery support</option><option value="other">Other</option></select></label>
+            <label>Brand<input name="brand" placeholder="Brand / product"></label>
+            <label>Amount per dose<input name="amount" type="number" min="0" step="any" placeholder="5"></label>
+            <label>Unit<input name="unit" placeholder="g, mg, ml, pump"></label>
+            <label>Times per day<input name="timesPerDay" type="number" min="0" max="24" step="0.5" value="1"></label>
+            <label>Timing<input name="timing" placeholder="Morning, pre-workout, with food"></label>
+            <label>Effective date<input name="effectiveDate" type="date" required></label>
+            <label class="checkbox-card"><input name="active" type="checkbox" checked> Active</label>
+          </div>
+          <label>Notes<textarea name="notes" rows="2" placeholder="Protocol context, reason, product details…"></textarea></label>
+          <div class="supplement-photo-controls">
+            <button id="takeSupplementPhotoButton" class="button button-primary" type="button">Take product photo</button>
+            <button id="chooseSupplementPhotoButton" class="button button-ghost" type="button">Choose from gallery</button>
+            <input id="supplementCameraInput" class="visually-hidden-file" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif" capture="environment">
+            <input id="supplementGalleryInput" class="visually-hidden-file" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif">
+          </div>
+          <div id="supplementPhotoPreview" class="supplement-photo-preview"><div class="empty-state compact-empty">No product photo selected.</div></div>
+          <div class="cycle-form-actions">
+            <button class="button button-success" type="submit">Save item</button>
+            <button id="cancelSupplementEditButton" class="button button-ghost" type="button" hidden>Cancel edit</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading"><div><p class="eyebrow">Saved library</p><h3>All items</h3></div></div>
+        <div id="supplementList" class="supplement-list"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading"><div><p class="eyebrow">Actual administrations</p><h3>Medication / injection events</h3></div></div>
+        <p class="metric-footnote">A plan does not mean a dose happened. Record actual administrations here so VANTAGE can correlate them by date without inferring future doses.</p>
+        <form id="administrationForm" class="measurement-form">
+          <div class="form-grid">
+            <label>Medication / item<select name="supplementId" id="administrationSupplementSelect"></select></label>
+            <label>Date<input name="effectiveDate" type="date" required></label>
+            <label>Dose<input name="amount" type="number" min="0" step="any"></label>
+            <label>Unit<input name="unit" placeholder="mg"></label>
+            <label>Route<select name="route"><option value="injection">Injection</option><option value="oral">Oral</option><option value="topical">Topical</option><option value="other">Other</option></select></label>
+          </div>
+          <label>Notes<input name="notes" placeholder="Optional administration note"></label>
+          <button class="button button-ghost button-wide" type="submit">Record administration</button>
+        </form>
+        <div id="administrationHistory" class="analytics-list"></div>
+      </section>
+      <p class="medical-note">Tracking only. VANTAGE does not recommend starting, stopping or changing prescribed medication or TRT. Dose changes belong with the prescribing clinician.</p>
+    </section>
+
+    <section id="historyScreen" class="screen" data-screen="history">
+      <div class="screen-heading">
+        <div>
+          <p class="eyebrow">Training archive</p>
+          <h2>Session history</h2>
+        </div>
+      </div>
+      <section class="panel progress-panel">
+        <div class="panel-heading">
+          <div><p class="eyebrow">Imported and saved history</p><h3>Exercise progress</h3></div>
+        </div>
+        <label>Exercise<select id="progressExerciseSelect"></select></label>
+        <div id="exerciseProgress"></div>
+        <details class="history-audit-panel">
+          <summary>History matching audit</summary>
+          <div id="historyAudit"></div>
+        </details>
+      </section>
+      <div id="historyList" class="history-list"></div>
+    </section>
+
+    <section id="dataScreen" class="screen" data-screen="data">
+      <div class="screen-heading">
+        <div>
+          <p class="eyebrow">Local-first controls</p>
+          <h2>Import and export</h2>
+        </div>
+      </div>
+
+      <section class="panel vantage-about-card">
+        <img src="icons/vantage-full-logo.svg" alt="Vantage health, wellbeing and performance">
+        <p>health • wellbeing • performance</p>
+      </section>
+
+      <section class="panel data-actions profile-panel">
+        <h3>Profile</h3>
+        <p>Local profile foundation for VANTAGE. Existing records are linked to this profile so future small-group/cloud testing can keep each person's data separate.</p>
+        <form id="profileForm" class="measurement-form">
+          <input name="id" type="hidden">
+          <div class="form-grid">
+            <label>Name<input name="name" placeholder="Steve"></label>
+            <label>Year of birth<input name="birthYear" type="number" min="1920" max="2020" step="1"></label>
+            <label>Height (cm)<input name="heightCm" type="number" min="100" max="230" step="0.1"></label>
+            <label>Sex<select name="sex"><option value="">Not set</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other / prefer not to say</option></select></label>
+            <label>Units<select name="units"><option value="metric">Metric</option><option value="imperial">Imperial</option></select></label>
+            <label>Timezone<input name="timezone" value="Europe/London"></label>
+            <label>Primary goal<input name="goal" placeholder="Cut / recomp / performance"></label>
+            <label>Training experience<input name="trainingExperience" placeholder="Experienced"></label>
+            <label>Target bodyweight (kg)<input name="targetBodyweightKg" type="number" min="30" max="300" step="0.1"></label>
+          </div>
+          <label>Food preferences / exclusions<input name="foodPreferences" placeholder="e.g. limit oats and sesame; no alcohol"></label>
+          <label>Notes<textarea name="notes" rows="2" placeholder="Profile-level context only"></textarea></label>
+          <fieldset class="profile-feature-panel">
+            <legend>Modules shown for this profile</legend>
+            <p class="metric-footnote">Turn off modules you do not want to use. Existing data stays stored and can be re-enabled later.</p>
+            <div class="feature-toggle-grid">
+              <label class="checkbox-card"><input name="feature_vitals" type="checkbox"> Vitals &amp; readiness</label>
+              <label class="checkbox-card"><input name="feature_macros" type="checkbox"> Meals &amp; macros</label>
+              <label class="checkbox-card"><input name="feature_recovery" type="checkbox"> Recovery</label>
+              <label class="checkbox-card"><input name="feature_metrics" type="checkbox"> Metrics &amp; analytics</label>
+              <label class="checkbox-card"><input name="feature_supplements" type="checkbox"> Supplements / TRT</label>
+              <label class="checkbox-card"><input name="feature_bloodwork" type="checkbox"> BioLab / bloodwork</label>
+              <label class="checkbox-card"><input name="feature_bodyMeasurements" type="checkbox"> Body measurements</label>
+            </div>
+          </fieldset>
+          <button class="button button-primary button-wide" type="submit">Save profile</button>
+        </form>
+        <div id="profileStatus" class="import-summary"></div>
+      </section>
+
+      <section class="training-builder-nav" aria-label="Training builder navigation">
+        <div id="trainingBuilderTabs" class="training-builder-tabs">
+          <button type="button" data-training-builder-tab="cycles" class="active">Cycles</button>
+          <button type="button" data-training-builder-tab="routines">Routines</button>
+          <button type="button" data-training-builder-tab="exercises">Exercises</button>
+        </div>
+        <p class="metric-footnote">Cycles control the training block and rotation. Routines control workout days. Exercises opens the full searchable library.</p>
+      </section>
+
+      <details class="panel data-actions training-phase-panel" open>
+        <summary><span><small>Training phases</small>Cut, lean bulk, deload and training blocks</span></summary>
+        <div class="analytics-body">
+          <div id="activeCyclesSummary"></div>
+          <button id="createHybridHeavyDutyCycleButton" class="button button-ghost button-wide hdm-quick-create" type="button">Create baseline Hybrid Heavy Duty · 8 weeks</button>
+          <button id="extendHybridHeavyDutyButton" class="button button-primary button-wide hdm-quick-create" type="button">Extend active HDM → A/B/C/D · Maintenance → Lean Mass</button>
+          <p class="metric-footnote">The extension preserves recorded HDM-A, HDM-B and LISS history, adds C/D, builds the six-week schedule from 25 Oct to 6 Dec, and keeps lean-mass activation behind the Maintenance Exit Review.</p>
+          <div id="hdmExtendedPanel" class="analytics-list hdm-extended-panel"></div>
+          <form id="trainingCycleForm" class="measurement-form">
+            <input name="id" type="hidden">
+            <div class="form-grid">
+              <label>Cycle layer
+                <select name="category">
+                  <option value="phase">Nutrition / body-composition phase</option>
+                  <option value="block">Training block</option>
+                </select>
+              </label>
+              <label>Cycle type
+                <select name="type">
+                  <option value="cut">Cut</option><option value="gain">Lean bulk / gain</option><option value="maintenance">Maintenance</option>
+                  <option value="deload">Deload</option><option value="hypertrophy">Hypertrophy</option><option value="strength">Strength</option><option value="custom">Custom</option>
+                </select>
+              </label>
+              <label>Display name<input name="name" required placeholder="Summer cut"></label>
+              <label>Start date<input name="startDate" type="date" required></label>
+              <label>Duration (weeks)<input name="durationWeeks" type="number" min="1" max="104" step="1" value="6" required></label>
+              <label class="checkbox-card"><input name="active" type="checkbox" checked> Make active</label>
+            </div>
+            <label>Notes<textarea name="notes" rows="2" placeholder="Calorie target, planned deload, progression focus…"></textarea></label>
+            <div class="cycle-form-actions">
+              <button class="button button-primary" type="submit">Save cycle</button>
+              <button id="cancelCycleEditButton" class="button button-ghost" type="button" hidden>Cancel edit</button>
+            </div>
+          </form>
+          <div id="trainingCycleList" class="analytics-list"></div>
+          <div id="metricsCycleSummary" class="analytics-list"></div>
+        </div>
+      </details>
+
+      <section class="panel data-actions program-manager-panel">
+        <div class="panel-heading"><div><p class="eyebrow">Flexible programming</p><h3>Programs &amp; splits</h3></div></div>
+        <p>A program is the workout rotation used inside a phase. Extend the phase without rebuilding the split, or switch programs when the next phase starts.</p>
+        <div id="activeProgramSummary"></div>
+        <div class="program-preset-create">
+          <div class="form-grid">
+            <label>Start from
+              <select id="programPresetSelect">
+                <option value="custom">Custom</option>
+                <option value="vantage-current">Current VANTAGE rotation</option>
+                <option value="full-body-3">Full Body · 3 day</option>
+                <option value="upper-lower-4">Upper / Lower · 4 day</option>
+                <option value="ppl-6">Push / Pull / Legs</option>
+                <option value="bro-5">Body-part split · 5 day</option>
+                <option value="heavy-duty-ab">Heavy Duty A / B</option>
+                <option value="hdm-maintenance">Hybrid Heavy Duty Maintenance · 8 week</option>
+                <option value="hdm-extended">Extended HDM · Maintenance → Lean Mass</option>
+              </select>
+            </label>
+            <label>Program name<input id="programPresetName" placeholder="Optional custom name"></label>
+          </div>
+          <button id="createProgramPresetButton" class="button button-primary button-wide" type="button">Create program</button>
+        </div>
+        <div id="programList" class="analytics-list"></div>
+        <div id="programScheduleEditor"></div>
+      </section>
+
+      <section class="panel data-actions routine-builder-panel">
+        <div class="panel-heading"><div><p class="eyebrow">Exercise library</p><h3>Routine builder</h3></div><span id="exerciseCatalogueSummary" class="source-badge"></span></div>
+        <p>Create your own workout day, then add any exercise from the library. Your own custom exercises remain available alongside the built-in catalogue.</p>
+        <div class="form-grid">
+          <label>Routine<select id="routineBuilderSelect"></select></label>
+          <label>New routine name<input id="newRoutineName" placeholder="Push A, Full Body B, Heavy Duty A…"></label>
+        </div>
+        <button id="createRoutineButton" class="button button-ghost button-wide" type="button">Create blank routine</button>
+        <div id="routineBuilderExerciseList" class="program-slot-list"></div>
+        <div class="library-picker">
+          <div class="panel-heading compact-heading"><div><p class="eyebrow">Add exercise</p><h4>Search library</h4></div></div>
+          <div class="form-grid">
+            <label class="full-width">Search<input id="routineLibrarySearch" type="search" placeholder="Press, row, squat, curl, machine brand…"></label>
+            <label>Muscle group<select id="routineLibraryBodyGroup"><option value="">All muscle groups</option></select></label>
+            <label>Equipment<select id="routineLibraryEquipment"><option value="">All equipment</option></select></label>
+          </div>
+          <div id="routineLibraryResults" class="exercise-picker-list"></div>
+        </div>
+      </section>
+
+      <section class="panel data-actions historical-import-panel">
+        <h3>Historical Markdown import</h3>
+        <p>Load a VANTAGE Markdown file after the original day has passed. The date inside the file is authoritative, so yesterday’s macros/vitals are stored against yesterday — never today.</p>
+        <p><strong>Supported:</strong> Vitals, daily Macros/Meals, Recovery session and Bloodwork Markdown.</p>
+        <label class="button button-primary button-wide file-button">Choose historical Markdown<input id="historicalMarkdownInput" type="file" accept=".md,text/markdown,text/plain"></label>
+        <label class="checkbox-card"><input id="replaceHistoricalDayCheckbox" type="checkbox"> Replace an existing same-date record if one already exists</label>
+        <div id="historicalMarkdownStatus" class="import-status" aria-live="polite"><div class="empty-state">No historical Markdown selected.</div></div>
+        <button id="applyHistoricalMarkdownButton" class="button button-success button-wide" type="button" hidden>Import historical record</button>
+      </section>
+
+      <section class="panel data-actions workbook-import-panel">
+        <h3>Import VANTAGE workout journal</h3>
+        <p>Select <strong>VANTAGE_Training_Journal_MobileV3.xlsx</strong>. The file is read on this device and is not uploaded anywhere.</p>
+        <label class="button button-primary button-wide file-button">Choose Excel workbook<input id="workbookInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"></label>
+        <label class="checkbox-card"><input id="replaceTrainingDataCheckbox" type="checkbox" checked> Replace current sessions, templates, exercise library and imported daily summaries</label>
+        <div id="workbookImportPreview"><div class="empty-state">Choose the VANTAGE workbook to inspect it locally.</div></div>
+        <button id="applyWorkbookImportButton" class="button button-success button-wide" hidden>Import workbook data</button>
+      </section>
+
+      <section class="panel data-actions coach-panel">
+        <h3>VANTAGE Coach bridge</h3>
+        <p>Create a privacy-controlled Coach Pack containing today’s selected app data, then share or paste it into the VANTAGE Coach thread in this project.</p>
+        <button id="copyCoachThreadPromptButton" class="button button-ghost button-wide">Copy Coach thread setup prompt</button>
+        <button class="button button-ghost button-wide" data-coach-context="general">Create full Coach Pack</button>
+      </section>
+
+      <section class="panel data-actions">
+        <h3>Complete backup</h3>
+        <p>Export every local record as one portable JSON backup.</p>
+        <button id="exportJsonButton" class="button button-primary button-wide">Export JSON backup</button>
+        <label class="button button-ghost button-wide file-button">Import JSON backup<input id="importJsonInput" type="file" accept="application/json,.json"></label>
+      </section>
+
+      <section class="panel data-actions experimental-panel">
+        <h3>Experimental machine connectivity</h3>
+        <p>FTMS Bluetooth code is retained for future diagnostics, but pairing is hidden from normal workouts because the tested gym consoles expose audio/HR-device pairing rather than a usable public workout-data stream. NFC watch-style hand-off is not available to this PWA.</p>
+      </section>
+
+      <section class="panel data-actions">
+        <h3>Spreadsheet-compatible exports</h3>
+        <p>Download flat CSV files shaped for future Google Sheets mapping.</p>
+        <button id="exportSetLogButton" class="button button-ghost button-wide">Export Set_Log CSV</button>
+        <button id="exportSessionLogButton" class="button button-ghost button-wide">Export Session_Log CSV</button>
+        <button id="exportMacroLogButton" class="button button-ghost button-wide">Export Macro_Log CSV</button>
+      </section>
+
+      <section class="panel data-actions danger-zone">
+        <h3>Demo data</h3>
+        <p>Restore the supplied VANTAGE templates and sample history. Existing local records will be replaced.</p>
+        <button id="restoreDemoButton" class="button button-danger button-wide">Restore demo data</button>
+      </section>
+
+      <section class="panel">
+        <h3>Storage status</h3>
+        <div id="storageStatus" class="storage-status"></div>
+      </section>
+    </section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Primary navigation">
+    <button class="active" data-nav="dashboard"><span>◫</span>Home</button>
+    <button data-nav="workout"><span>⚡</span>Workout</button>
+    <button data-nav="meals"><span>◎</span>Meals</button>
+    <button data-nav="vitals"><span>♥</span>Vitals</button>
+    <button data-nav="recovery"><span>↻</span>Recovery</button>
+    <button data-nav="supplements"><span>＋</span>Supps</button>
+    <button data-nav="metrics"><span>▥</span>Metrics</button>
+    <button data-nav="biolab"><span>◉</span>BioLab</button>
+    <button data-nav="data"><span>⇅</span>Data</button>
+  </nav>
+
+  <datalist id="exerciseVariationOptions">
+    <option value="Machine"></option><option value="Cable"></option><option value="Dumbbell"></option><option value="Plate-loaded"></option><option value="Selectorised"></option><option value="Unilateral"></option><option value="Neutral grip"></option><option value="Wide grip"></option><option value="Close grip"></option>
+  </datalist>
+
+  <template id="exerciseCardTemplate">
+    <article class="exercise-card">
+      <div class="exercise-reorder-row">
+        <div class="exercise-drag-handle" role="button" tabindex="0" aria-label="Hold and drag to reorder exercise">
+          <span aria-hidden="true">≡</span> Touch and drag
+        </div>
+        <div class="exercise-move-buttons" aria-label="Move exercise">
+          <button type="button" class="move-exercise-up" aria-label="Move exercise up">↑</button>
+          <button type="button" class="move-exercise-down" aria-label="Move exercise down">↓</button>
+        </div>
+      </div>
+      <div class="exercise-header">
+        <div>
+          <p class="exercise-order"></p>
+          <h3 class="exercise-name"></h3>
+          <p class="previous-performance"></p>
+        </div>
+        <div class="exercise-card-actions">
+          <button class="text-button change-exercise-button" type="button">Change</button>
+          <button class="text-button exercise-collapse-button" type="button" aria-expanded="true">Collapse</button>
+          <button class="icon-button remove-exercise-button" type="button" aria-label="Remove exercise">×</button>
+        </div>
+      </div>
+      <div class="exercise-card-body">
+      <div class="exercise-reference-feature" hidden>
+        <button class="exercise-reference-feature-image" type="button" aria-label="Open primary setup reference"><img alt="Exercise setup reference"></button>
+        <div class="exercise-reference-feature-copy">
+          <p class="eyebrow">Setup reference</p>
+          <strong class="exercise-reference-feature-label">Reference</strong>
+          <p class="exercise-reference-feature-note">No note</p>
+          <button class="text-button exercise-reference-manage-button" type="button">Manage photos</button>
+        </div>
+      </div>
+      <details class="exercise-identity-panel">
+        <summary>Exercise identity and machine details</summary>
+        <div class="form-grid">
+          <label class="full-width">Exercise name<input class="exercise-identity-name" type="text"></label>
+          <label>Machine brand<input class="exercise-machine-brand" type="text" placeholder="Hammer Strength, Arsenal, Watson…"></label>
+          <label>Machine model<input class="exercise-machine-model" type="text" placeholder="Optional model"></label>
+          <label>Nickname / alias<input class="exercise-nickname" type="text" placeholder="Cutler incline fly"></label>
+          <label>Variation<input class="exercise-variation" type="text" list="exerciseVariationOptions" placeholder="Machine, cable, neutral grip, unilateral…"></label>
+          <label>Movement pattern<input class="exercise-movement-pattern" type="text" placeholder="chest-fly, incline-press…"></label>
+        </div>
+        <p class="camera-storage-note">Machine identity is kept separate from the movement name so unlike machines are not treated as equal by default.</p>
+      </details>
+
+      <details class="exercise-reference-panel">
+        <summary><span>📷 Reference image</span><span class="exercise-reference-count">0</span></summary>
+        <p class="exercise-reference-help">Keep one active permanent reference for this exercise. Adding a new reference archives the previous active image. Archived references are not exported by default.</p>
+        <div class="exercise-reference-fields">
+          <label>Reference type
+            <select class="exercise-reference-category">
+              <option value="new-machine">New machine</option>
+              <option value="seat-setting">Seat / pad setting</option>
+              <option value="foot-placement">Foot placement</option>
+              <option value="grip-hold">Grip / hold position</option>
+              <option value="body-position">Body position</option>
+              <option value="other">Other</option>
+            </select>
+          </label>
+          <label>Photo comment<input class="exercise-reference-note" type="text" placeholder="Seat 4, feet high and shoulder-width…"></label>
+        </div>
+        <div class="exercise-reference-actions">
+          <button class="button button-primary exercise-reference-camera-button" type="button">Replace reference with camera photo</button>
+          <button class="button button-ghost exercise-reference-gallery-button" type="button">Replace reference from gallery</button>
+          <input class="exercise-reference-camera visually-hidden-file" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif" capture="environment">
+          <input class="exercise-reference-gallery visually-hidden-file" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif" multiple>
+        </div>
+        <p class="exercise-reference-status image-import-status" aria-live="polite"></p>
+        <p class="camera-storage-note">Captured photos are stored in VANTAGE. Use ↗ on a saved photo to send it to Photos/Gallery/Files, or ↓ to keep a copy in Downloads.</p>
+        <div class="exercise-reference-preview"><div class="empty-state compact-empty">No setup photos saved.</div></div>
+      </details>
+      <details class="exercise-session-media-panel">
+        <summary><span>📸 Current session images</span><span class="exercise-session-media-count">0</span></summary>
+        <p class="exercise-reference-help">These images belong only to this workout and are included in the Coach Pack. Confirm the image type and linked exercise before saving.</p>
+        <div class="exercise-reference-fields">
+          <label>Image type
+            <select class="exercise-session-media-role">
+              <option value="exerciseSessionPhoto">Current session photo</option>
+              <option value="exerciseTechniquePhoto">Technique / form photo</option>
+              <option value="bodyPositionReference">Body position reference</option>
+              <option value="machineReference">Machine photo</option>
+              <option value="invalidPhoto">Invalid / unrelated image</option>
+            </select>
+          </label>
+          <label>Caption / note<input class="exercise-session-media-note" type="text" placeholder="Current setup, elbow position, machine used…"></label>
+        </div>
+        <div class="exercise-reference-actions">
+          <button class="button button-primary exercise-session-camera-button" type="button">Take session photo</button>
+          <button class="button button-ghost exercise-session-gallery-button" type="button">Choose session image</button>
+          <input class="exercise-session-camera visually-hidden-file" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif" capture="environment">
+          <input class="exercise-session-gallery visually-hidden-file" type="file" accept="image/*,.jpg,.jpeg,.png,.webp,.heic,.heif" multiple>
+        </div>
+        <p class="exercise-session-media-status image-import-status" aria-live="polite"></p>
+        <div class="exercise-session-media-preview"><div class="empty-state compact-empty">No current-session images saved.</div></div>
+      </details>
+
+      <div class="set-table">
+        <div class="set-row set-head">
+          <span>Type</span><span>kg</span><span>Reps</span><span>RPE</span><span>Rest</span><span>Fail</span><span></span>
+        </div>
+        <div class="set-rows"></div>
+        <div class="add-set-row"><button class="button button-ghost add-set-button" type="button">+ Add set</button></div>
+      </div>
+      <label class="exercise-notes-label">Exercise notes<textarea class="exercise-notes" rows="2" placeholder="Slow negative, static hold, no grind…"></textarea></label>
+      <details class="exercise-symptom-panel">
+        <summary>Symptom / discomfort during this exercise</summary>
+        <div class="form-grid">
+          <label class="checkbox-card full-width"><input class="exercise-symptom-present" type="checkbox"> Symptom present</label>
+          <label>Area<input class="exercise-symptom-area" type="text" placeholder="Right shoulder"></label>
+          <label>Type<input class="exercise-symptom-type" type="text" placeholder="Discomfort, clicking"></label>
+          <label>Trigger<input class="exercise-symptom-trigger" type="text" placeholder="Deep stretch / eccentric"></label>
+          <label>Severity<input class="exercise-symptom-severity" type="number" min="0" max="10" step="1" placeholder="Optional 0-10"></label>
+          <label class="full-width">Action taken<input class="exercise-symptom-action" type="text" placeholder="Reduced ROM, stopped set, no action"></label>
+        </div>
+      </details>
+      </div>
+
+    </article>
+  </template>
+
+  <dialog id="exerciseDialog" class="app-dialog">
+    <div class="dialog-heading">
+      <div><p class="eyebrow">Workout editor</p><h2>Add exercise</h2></div>
+      <button id="closeExerciseDialogButton" class="icon-button" aria-label="Close">×</button>
+    </div>
+    <label>Search exercise<input id="exerciseSearch" type="search" placeholder="Leg extension, cable row, curl…"></label>
+    <div class="form-grid">
+      <label>Workout type<select id="exerciseWorkoutFilter"></select></label>
+      <label>Muscle group<select id="exerciseBodyGroupFilter"><option value="">All muscle groups</option></select></label>
+      <label>Equipment<select id="exerciseEquipmentFilter"><option value="">All equipment</option></select></label>
+    </div>
+    <label class="checkbox-card"><input id="addToTemplateCheckbox" type="checkbox"> Also add selected exercise to this workout template</label>
+    <div id="exercisePickerList" class="exercise-picker-list"></div>
+    <details class="create-exercise-panel">
+      <summary>Create a new exercise</summary>
+      <form id="newExerciseForm" class="form-grid dialog-form">
+        <label class="full-width">Exercise name<input name="name" required placeholder="Atlantis pendulum squat"></label>
+        <label>Workout type<input name="workoutType" placeholder="Legs"></label>
+        <label>Body group<input name="bodyGroup" placeholder="Quads"></label>
+        <label>Equipment<input name="equipment" placeholder="Plate-loaded machine"></label>
+        <label class="full-width">Notes<textarea name="notes" rows="2" placeholder="Slow negative, controlled depth…"></textarea></label>
+        <label class="checkbox-card full-width"><input name="addToTemplate" type="checkbox"> Add to today and update the current template</label>
+        <button class="button button-primary button-wide full-width" type="submit">Create and add exercise</button>
+      </form>
+    </details>
+  </dialog>
+
+
+  <dialog id="replaceExerciseDialog" class="app-dialog">
+    <div class="dialog-heading">
+      <div><p class="eyebrow">Temporary substitution</p><h2>Change exercise for today</h2></div>
+      <button id="closeReplaceExerciseDialogButton" class="icon-button" aria-label="Close">×</button>
+    </div>
+    <p id="replaceExercisePrompt">Choose a replacement. The normal routine is not changed and will return next time.</p>
+    <label>Search exercise<input id="replaceExerciseSearch" type="search" placeholder="Machine press, cable raise, curl…"></label>
+    <label>Workout type<select id="replaceExerciseWorkoutFilter"></select></label>
+    <div id="replaceExercisePickerList" class="exercise-picker-list"></div>
+  </dialog>
+
+  <dialog id="removeExerciseDialog" class="app-dialog">
+    <div class="dialog-heading">
+      <div><p class="eyebrow">Workout editor</p><h2>Remove exercise</h2></div>
+      <button id="closeRemoveExerciseDialogButton" class="icon-button" aria-label="Close">×</button>
+    </div>
+    <p>Choose an exercise to remove from today. Tick the option below only when the exercise should also disappear from this template next time.</p>
+    <label class="checkbox-card"><input id="removeFromTemplateCheckbox" type="checkbox"> Also remove from the current workout template</label>
+    <div id="removeExerciseList" class="exercise-picker-list"></div>
+  </dialog>
+
+
+  <dialog id="imagePreviewDialog" class="app-dialog image-preview-dialog">
+    <div class="dialog-heading">
+      <div><p class="eyebrow">Exercise reference</p><h2 id="imagePreviewTitle">Setup photo</h2></div>
+      <button id="closeImagePreviewDialogButton" class="icon-button" aria-label="Close">×</button>
+    </div>
+    <img id="imagePreviewImage" alt="Exercise setup reference">
+    <p id="imagePreviewNote"></p>
+  </dialog>
+
+  <dialog id="ocrReviewDialog" class="app-dialog ocr-review-dialog">
+    <div class="dialog-heading">
+      <div><p class="eyebrow">Experimental OCR</p><h2>Screenshot review</h2></div>
+      <button id="closeOcrReviewDialogButton" class="icon-button" aria-label="Close">×</button>
+    </div>
+    <div class="ocr-advice">
+      <strong>For a reliable read</strong>
+      <ul>
+        <li>Use one summary screen per image; attach the NOOP summary and machine console as separate images.</li>
+        <li>Keep the phone square to the screen and avoid reflections or fingers.</li>
+        <li>Fill the frame but keep labels and values together.</li>
+        <li>Use screenshots rather than camera photos whenever possible.</li>
+      </ul>
+    </div>
+    <div class="ocr-image-stage"><img id="ocrPreviewImage" alt="Screenshot selected for OCR"><span class="ocr-grid" aria-hidden="true"></span></div>
+    <div id="ocrProgress" class="import-status">Ready to scan.</div>
+    <div id="ocrParsedResults" class="ocr-results"></div>
+    <details><summary>Raw OCR text</summary><textarea id="ocrRawText" rows="9" readonly></textarea></details>
+    <div class="dialog-actions">
+      <button id="applyOcrSuggestionsButton" class="button button-primary" type="button" disabled>Use OCR suggestions</button>
+      <button id="keepOcrEvidenceButton" class="button button-ghost" type="button" disabled>Keep as evidence only</button>
+    </div>
+    <p class="medical-note">OCR is experimental. Review every number. Existing structured values are preserved when a conflict is found.</p>
+  </dialog>
+
+  <dialog id="coachDialog" class="app-dialog coach-dialog">
+    <div class="dialog-heading">
+      <div><p class="eyebrow">VANTAGE Coach Pack</p><h2 id="coachContextLabel">Full daily review</h2></div>
+      <button id="closeCoachDialogButton" class="icon-button" aria-label="Close">×</button>
+    </div>
+    <p>The pack only contains the VANTAGE data shown in the preview context. Nothing leaves the phone until you copy or share it.</p>
+    <label>Your question for Alex<textarea id="coachQuestion" rows="4" placeholder="Review this pre-workout meal and tell me whether the carbs are enough for legs today."></textarea></label>
+    <div class="dialog-actions">
+      <button id="copyCoachPackButton" class="button button-ghost">Copy Coach Pack</button>
+      <button id="shareCoachPackButton" class="button button-primary">Share Coach Pack</button>
+    </div>
+  </dialog>
+
+  <input id="lissAnalysisInput" type="file" accept=".md,text/markdown,text/plain" hidden>
+  <input id="strengthAnalysisInput" type="file" accept=".md,text/markdown,text/plain" hidden>
+
+  <dialog id="hydrationReminderDialog" class="app-dialog hydration-reminder-dialog">
+    <div class="dialog-heading">
+      <div><p class="eyebrow">Before finishing</p><h2>Hydration not recorded</h2></div>
+      <button id="closeHydrationReminderButton" class="icon-button" aria-label="Close">×</button>
+    </div>
+    <p>Add what you drank, confirm that no hydration was taken, or finish without recording it.</p>
+    <div id="hydrationReminderForm" class="form-grid">
+      <label>Amount (ml)<input id="hydrationReminderAmount" type="number" min="0" step="50" inputmode="numeric" placeholder="500"></label>
+      <label>Contents<input id="hydrationReminderItems" type="text" placeholder="EAAs, electrolytes, coconut water…"></label>
+      <label class="full-width">Notes<input id="hydrationReminderNotes" type="text" placeholder="500ml intra-session drink"></label>
+    </div>
+    <div class="data-actions">
+      <button id="saveHydrationAndContinueButton" class="button button-primary" type="button">Add hydration</button>
+      <button id="noHydrationAndContinueButton" class="button button-ghost" type="button">No hydration taken</button>
+      <button id="skipHydrationAndContinueButton" class="button button-ghost" type="button">Finish anyway</button>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="app.js?v=1.4.3"></script>
+</body>
+</html>
