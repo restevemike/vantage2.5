@@ -66,7 +66,7 @@ export async function cloudSession() {
 export async function sendMagicLink(email) {
   const client = await loadSupabase();
   const address = String(email || '').trim();
-  if (!address || !address.includes('@')) throw new Error('Enter a valid email address.');
+  if (!address) throw new Error('Enter your email address.');
   const redirect = location.href.split('#')[0].split('?')[0];
   const { error } = await client.auth.signInWithOtp({
     email: address,
