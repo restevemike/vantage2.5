@@ -1,7 +1,7 @@
 import {
   configureCloud, cloudConfig, cloudSession, sendMagicLink, signOutCloud,
   pushCoreSnapshot, inspectCloudSnapshot, restoreCoreSnapshot
-} from './cloud-sync.js?v=1.4.3-cloud1';
+} from './cloud-sync.js?v=1.4.3-cloud2';
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
