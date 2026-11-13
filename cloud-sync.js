@@ -1,4 +1,4 @@
-import * as db from './db.js?v=1.5.2';
+import * as db from './db.js?v=1.5.3';
 
 const CONFIG_KEY = 'vantage-cloud-config-v1';
 const DEFAULT_CLOUD_CONFIG = {
@@ -143,6 +143,7 @@ export async function syncCoreIncremental() {
   const remote = await remoteCoreMap(client, userId);
   const baseline = readBaseline(CORE_BASELINE_PREFIX, userId);
   const nextBaseline = { ...baseline };
+  const bootstrap = Object.keys(baseline).length === 0 && remote.size > 0;
   const uploads = [];
   const remoteDeletes = [];
   const localWrites = [];
@@ -160,7 +161,10 @@ export async function syncCoreIncremental() {
     if (!base) {
       if (lf && !rf) uploads.push(l);
       else if (!lf && rf) localWrites.push(r);
-      else if (lf && rf && lf !== rf) conflicts.push(key);
+      else if (lf && rf && lf !== rf) {
+        if (bootstrap) localWrites.push(r);
+        else conflicts.push(key);
+      }
       if (lf === rf && lf) nextBaseline[key] = lf;
       continue;
     }
@@ -221,7 +225,8 @@ export async function syncCoreIncremental() {
     downloaded: localWrites.length,
     remoteDeleted: remoteDeletes.filter(Boolean).length,
     localDeleted: localDeletes.filter(Boolean).length,
-    conflicts: conflicts.map(key => key.replace('\u0000', ':'))
+    conflicts: conflicts.map(key => key.replace('\u0000', ':')),
+    bootstrap
   };
 }
 
@@ -281,6 +286,7 @@ export async function syncMediaIncremental() {
   const remote = await remoteMediaMap(client, userId);
   const baseline = readBaseline(MEDIA_BASELINE_PREFIX, userId);
   const nextBaseline = { ...baseline };
+  const bootstrap = Object.keys(baseline).length === 0 && remote.size > 0;
   const uploads = [];
   const downloads = [];
   const remoteDeletes = [];
@@ -294,7 +300,10 @@ export async function syncMediaIncremental() {
     if (!base) {
       if (lf && !rf) uploads.push(l);
       else if (!lf && rf) downloads.push(r);
-      else if (lf && rf && lf !== rf) conflicts.push(key);
+      else if (lf && rf && lf !== rf) {
+        if (bootstrap) downloads.push(r);
+        else conflicts.push(key);
+      }
       if (lf === rf && lf) nextBaseline[key] = lf;
       continue;
     }
@@ -358,7 +367,8 @@ export async function syncMediaIncremental() {
     uploaded: uploads.length, downloaded: downloads.length,
     remoteDeleted: remoteDeletes.filter(Boolean).length,
     localDeleted: localDeletes.filter(Boolean).length,
-    conflicts: conflicts.map(key => key.replace('\u0000', ':'))
+    conflicts: conflicts.map(key => key.replace('\u0000', ':')),
+    bootstrap
   };
 }
 

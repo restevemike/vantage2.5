@@ -2,7 +2,7 @@ name: Test VANTAGE Cloud Sync
 
 on:
   push:
-    branches: ["feature/cloud-sync", "feature/cloud-sync-phase2b", "feature/cloud-sync-phase2c", "fix/auth-magic-link-v152"]
+    branches: ["feature/cloud-sync", "feature/cloud-sync-phase2b", "feature/cloud-sync-phase2c", "fix/auth-magic-link-v152", "fix/device-bootstrap-v153"]
   workflow_dispatch:
 
 permissions:
