@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 
 const read = path => readFile(new URL('../' + path, import.meta.url), 'utf8');
 
-test('v1.5.2 ships Phase 2B incremental cloud sync and OTP UI', async () => {
+test('v1.5.2 ships incremental cloud sync with explicit magic-link redirect', async () => {
   const [cloud, ui, html, sw, manifestText, pkgText] = await Promise.all([
     read('cloud-sync.js'), read('cloud-sync-ui.js'), read('index.html'),
     read('sw.js'), read('manifest.webmanifest'), read('package.json')
@@ -16,12 +16,14 @@ test('v1.5.2 ships Phase 2B incremental cloud sync and OTP UI', async () => {
   assert.match(cloud, /syncMediaIncremental/);
   assert.match(cloud, /vantage_cloud_records/);
   assert.match(cloud, /vantage_cloud_media/);
-  assert.match(cloud, /vantage-media/);\n  assert.match(cloud, /emailRedirectTo/);\n  assert.match(ui, /Email sign-in link/);
-    assert.match(cloud, /type:\s*'email'/);
+  assert.match(cloud, /vantage-media/);
+  assert.match(cloud, /emailRedirectTo/);
+  assert.match(cloud, /sendMagicLink/);
   assert.match(cloud, /conflicts/);
 
-  assert.match(ui, /Phase 2B/);
-    assert.match(ui, /Sync core records/);
+  assert.match(ui, /Phase 2C/);
+  assert.match(ui, /Email sign-in link/);
+  assert.match(ui, /Sync core records/);
   assert.match(ui, /Sync private media/);
 
   assert.match(html, /v1\.5\.2/);
