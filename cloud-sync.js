@@ -118,8 +118,8 @@ function clearBaseline(prefix, userId) {
   localStorage.removeItem(prefix + userId);
 }
 function notifyCloudDataApplied(detail = {}) {
-  if (typeof window?.dispatchEvent !== 'function' || typeof CustomEvent === 'undefined') return;
-  window.dispatchEvent(new CustomEvent('vantage-cloud-data-applied', { detail }));
+  if (typeof globalThis.dispatchEvent !== 'function' || typeof globalThis.CustomEvent === 'undefined') return;
+  globalThis.dispatchEvent(new CustomEvent('vantage-cloud-data-applied', { detail }));
 }
 
 async function localCoreMap() {
