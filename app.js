@@ -7362,7 +7362,7 @@ async function init() {
   setInterval(checkForLocalDayChange, 60000);
   window.addEventListener('focus', checkForLocalDayChange);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) checkForLocalDayChange(); });
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=1.5.4').catch(console.error);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=1.5.5').catch(console.error);
 }
 
 init().catch(error => {
