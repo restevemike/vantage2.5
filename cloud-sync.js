@@ -385,6 +385,40 @@ export async function syncMediaIncremental() {
   };
 }
 
+export async function pullNewestVitalsFromCloud() {
+  const { client, session } = await requireSession();
+  const userId = session.user.id;
+  const { data, error } = await client.from('vantage_cloud_records')
+    .select('record_id,payload,fingerprint,updated_at')
+    .eq('user_id', userId)
+    .eq('store_name', 'vitals');
+  if (error) throw error;
+  const rows = (data || [])
+    .filter(row => row?.payload?.date)
+    .sort((a, b) => String(b.payload.date).localeCompare(String(a.payload.date)) || String(b.updated_at || '').localeCompare(String(a.updated_at || '')));
+  const newest = rows[0];
+  if (!newest?.payload) throw new Error('No cloud vitals record was found.');
+
+  globalThis.__vantageCloudApplying = true;
+  try {
+    await db.put('vitals', newest.payload);
+  } finally {
+    globalThis.__vantageCloudApplying = false;
+  }
+
+  const baseline = readBaseline(CORE_BASELINE_PREFIX, userId);
+  baseline[compositeKey('vitals', newest.record_id)] = newest.fingerprint || await rowFingerprint(newest.payload);
+  saveBaseline(CORE_BASELINE_PREFIX, userId, baseline);
+  notifyCloudDataApplied({ kind: 'vitals', downloaded: 1, recordId: newest.record_id, date: newest.payload.date, forced: true });
+
+  return {
+    recordId: newest.record_id,
+    date: newest.payload.date,
+    updatedAt: newest.updated_at,
+    payload: newest.payload
+  };
+}
+
 export async function rebootstrapFromCloud() {
   const { session } = await requireSession();
   const userId = session.user.id;
