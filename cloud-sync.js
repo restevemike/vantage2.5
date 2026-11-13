@@ -208,14 +208,19 @@ export async function syncCoreIncremental() {
     if (error) throw error;
     delete nextBaseline[compositeKey(item.store, item.id)];
   }
-  for (const item of localWrites) {
-    if (!CORE_STORES.includes(item.store)) continue;
-    await db.put(item.store, item.payload);
-    nextBaseline[compositeKey(item.store, item.id)] = item.fingerprint;
-  }
-  for (const item of localDeletes.filter(Boolean)) {
-    await db.remove(item.store, item.id);
-    delete nextBaseline[compositeKey(item.store, item.id)];
+  globalThis.__vantageCloudApplying = true;
+  try {
+    for (const item of localWrites) {
+      if (!CORE_STORES.includes(item.store)) continue;
+      await db.put(item.store, item.payload);
+      nextBaseline[compositeKey(item.store, item.id)] = item.fingerprint;
+    }
+    for (const item of localDeletes.filter(Boolean)) {
+      await db.remove(item.store, item.id);
+      delete nextBaseline[compositeKey(item.store, item.id)];
+    }
+  } finally {
+    globalThis.__vantageCloudApplying = false;
   }
 
   saveBaseline(CORE_BASELINE_PREFIX, userId, nextBaseline);
@@ -325,11 +330,16 @@ export async function syncMediaIncremental() {
     nextBaseline[compositeKey(item.store, item.id)] = item.fingerprint;
   }
 
-  for (const item of downloads) {
-    if (!MEDIA_STORES.has(item.store)) continue;
-    const blob = await downloadRemoteMedia(client, item);
-    await db.put(item.store, { ...item.payload, blob });
-    nextBaseline[compositeKey(item.store, item.id)] = item.fingerprint;
+  globalThis.__vantageCloudApplying = true;
+  try {
+    for (const item of downloads) {
+      if (!MEDIA_STORES.has(item.store)) continue;
+      const blob = await downloadRemoteMedia(client, item);
+      await db.put(item.store, { ...item.payload, blob });
+      nextBaseline[compositeKey(item.store, item.id)] = item.fingerprint;
+    }
+  } finally {
+    globalThis.__vantageCloudApplying = false;
   }
 
   for (const item of remoteDeletes.filter(Boolean)) {
@@ -341,9 +351,14 @@ export async function syncMediaIncremental() {
     delete nextBaseline[compositeKey(item.store, item.id)];
   }
 
-  for (const item of localDeletes.filter(Boolean)) {
-    await db.remove(item.store, item.id);
-    delete nextBaseline[compositeKey(item.store, item.id)];
+  globalThis.__vantageCloudApplying = true;
+  try {
+    for (const item of localDeletes.filter(Boolean)) {
+      await db.remove(item.store, item.id);
+      delete nextBaseline[compositeKey(item.store, item.id)];
+    }
+  } finally {
+    globalThis.__vantageCloudApplying = false;
   }
 
   saveBaseline(MEDIA_BASELINE_PREFIX, userId, nextBaseline);
@@ -354,6 +369,12 @@ export async function syncMediaIncremental() {
     localDeleted: localDeletes.filter(Boolean).length,
     conflicts: conflicts.map(key => key.replace('\u0000', ':'))
   };
+}
+
+export async function syncAllIncremental() {
+  const core = await syncCoreIncremental();
+  const media = await syncMediaIncremental();
+  return { core, media };
 }
 
 export async function cloudSyncStatus() {
