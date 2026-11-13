@@ -1,25 +1,25 @@
-import * as db from './db.js?v=1.5.3';
-import { templates, exerciseLibrary, sampleVitals, sampleSessions, sampleMeals } from './seed.js?v=1.5.3';
-import { parseVantageWorkbook, nameKey, stableId } from './xlsx-import.js?v=1.5.3';
-import { calculateReadiness } from './readiness.js?v=1.5.3';
-import { parseVitalsMarkdown, applyVitalsToForm, VITALS_FILE_PROMPT, createVitalsMarkdownExample } from './vitals-markdown.js?v=1.5.3';
-import { createWorkoutMarkdown, workoutMarkdownFilename } from './workout-markdown.js?v=1.5.3';
-import { parseNutritionMarkdown, createNutritionMarkdown, nutritionMarkdownFilename, MACRO_FILE_PROMPT } from './nutrition-markdown.js?v=1.5.3';
-import { createLissMarkdown, lissMarkdownFilename, parseLissAnalysisMarkdown, cleanSources, sourcesToLegacyMetrics, legacyMetricsToSources, compareLissSources, classifyLissSession, sanitiseLissAnalysisEvidence } from './liss-markdown.js?v=1.5.3';
-import { createZip, sha256Hex } from './zip-pack.js?v=1.5.3';
-import { parseBloodworkMarkdown, parseBloodworkAnalysisMarkdown, createBloodworkMarkdown, createBloodworkAnalysisMarkdown, createBloodworkAnalysisRequest, bloodworkMarkdownFilename, bloodworkAnalysisFilename, markerHistory, markerNameKey } from './bloodwork-markdown.js?v=1.5.3';
-import { metricsOverview, exerciseNames, exerciseProgress as buildExerciseProgress, muscleDistribution, weeklyTrainingLoad, nutritionWeightSummary, bodyMeasurementSeries, wearableSummary, readinessAlignment, relativeStrength, flattenStrengthSets, nutritionPerformanceAnalysis, nutritionSessionPerformanceAnalysis, strengthSessionFamilies, cycleWeekNumber, cyclePerformanceSummary, supplementPerformanceComparison, supplementStateOnDate } from './metrics-engine.js?v=1.5.3';
-import { parseStrengthAnalysisMarkdown, strengthAnalysisTemplate } from './strength-analysis.js?v=1.5.3';
-import { runExperimentalOcr, parseFitnessSummaryText, ocrResultRows } from './ocr-engine.js?v=1.5.3';
-import { createRecoveryMarkdown, recoveryMarkdownFilename, recoveryAnalysisTemplate } from './recovery-markdown.js?v=1.5.3';
-import { findBestPreviousStrengthSession, matchExerciseFromSession, canonicalExerciseIdentity, exerciseCompatibility, historyAuditForExercise } from './workout-history.js?v=1.5.3';
-import { duplicateSourceExerciseIds, strengthIdentityBlockingIssues, inferMachineBrand, inferMachineModel, inferMovementPattern } from './strength-integrity.js?v=1.5.3';
-import { mediaHashAudit, roleContentValidation, ocrValidationState, ocrMediaAuthoritative } from './evidence-integrity.js?v=1.5.3';
-import { detectHistoricalMarkdown } from './historical-import.js?v=1.5.3';
-import { builtInExerciseLibrary, exerciseCatalogueSummary } from './exercise-catalogue.js?v=1.5.3';
-import { DEFAULT_FEATURE_FLAGS, PROGRAM_PRESETS, HDM_EXTENDED_META, HDM_EXTENDED_SCHEDULE, hdmTransitionGate, normaliseFeatureFlags, activeProgram, nextProgramSlot, advanceProgramProgress, programPresetById } from './programs.js?v=1.5.3';
+import * as db from './db.js?v=1.5.4';
+import { templates, exerciseLibrary, sampleVitals, sampleSessions, sampleMeals } from './seed.js?v=1.5.4';
+import { parseVantageWorkbook, nameKey, stableId } from './xlsx-import.js?v=1.5.4';
+import { calculateReadiness } from './readiness.js?v=1.5.4';
+import { parseVitalsMarkdown, applyVitalsToForm, VITALS_FILE_PROMPT, createVitalsMarkdownExample } from './vitals-markdown.js?v=1.5.4';
+import { createWorkoutMarkdown, workoutMarkdownFilename } from './workout-markdown.js?v=1.5.4';
+import { parseNutritionMarkdown, createNutritionMarkdown, nutritionMarkdownFilename, MACRO_FILE_PROMPT } from './nutrition-markdown.js?v=1.5.4';
+import { createLissMarkdown, lissMarkdownFilename, parseLissAnalysisMarkdown, cleanSources, sourcesToLegacyMetrics, legacyMetricsToSources, compareLissSources, classifyLissSession, sanitiseLissAnalysisEvidence } from './liss-markdown.js?v=1.5.4';
+import { createZip, sha256Hex } from './zip-pack.js?v=1.5.4';
+import { parseBloodworkMarkdown, parseBloodworkAnalysisMarkdown, createBloodworkMarkdown, createBloodworkAnalysisMarkdown, createBloodworkAnalysisRequest, bloodworkMarkdownFilename, bloodworkAnalysisFilename, markerHistory, markerNameKey } from './bloodwork-markdown.js?v=1.5.4';
+import { metricsOverview, exerciseNames, exerciseProgress as buildExerciseProgress, muscleDistribution, weeklyTrainingLoad, nutritionWeightSummary, bodyMeasurementSeries, wearableSummary, readinessAlignment, relativeStrength, flattenStrengthSets, nutritionPerformanceAnalysis, nutritionSessionPerformanceAnalysis, strengthSessionFamilies, cycleWeekNumber, cyclePerformanceSummary, supplementPerformanceComparison, supplementStateOnDate } from './metrics-engine.js?v=1.5.4';
+import { parseStrengthAnalysisMarkdown, strengthAnalysisTemplate } from './strength-analysis.js?v=1.5.4';
+import { runExperimentalOcr, parseFitnessSummaryText, ocrResultRows } from './ocr-engine.js?v=1.5.4';
+import { createRecoveryMarkdown, recoveryMarkdownFilename, recoveryAnalysisTemplate } from './recovery-markdown.js?v=1.5.4';
+import { findBestPreviousStrengthSession, matchExerciseFromSession, canonicalExerciseIdentity, exerciseCompatibility, historyAuditForExercise } from './workout-history.js?v=1.5.4';
+import { duplicateSourceExerciseIds, strengthIdentityBlockingIssues, inferMachineBrand, inferMachineModel, inferMovementPattern } from './strength-integrity.js?v=1.5.4';
+import { mediaHashAudit, roleContentValidation, ocrValidationState, ocrMediaAuthoritative } from './evidence-integrity.js?v=1.5.4';
+import { detectHistoricalMarkdown } from './historical-import.js?v=1.5.4';
+import { builtInExerciseLibrary, exerciseCatalogueSummary } from './exercise-catalogue.js?v=1.5.4';
+import { DEFAULT_FEATURE_FLAGS, PROGRAM_PRESETS, HDM_EXTENDED_META, HDM_EXTENDED_SCHEDULE, hdmTransitionGate, normaliseFeatureFlags, activeProgram, nextProgramSlot, advanceProgramProgress, programPresetById } from './programs.js?v=1.5.4';
 
-const APP_VERSION = '1.5.3';
+const APP_VERSION = '1.5.4';
 // v1.3.10.6 hotfix: removed stale FTMS renderer calls after FTMS UI was removed from normal LISS.
 let replaceExerciseTargetId = null;
 const DRAFT_KEY = 'vantage-current-session';
@@ -487,7 +487,7 @@ async function buildWorkoutCoachPack(session) {
     { name: workoutMarkdownFilename(session), data: markdown },
     { name: 'manifest.json', data: JSON.stringify(manifest, null, 2) },
     { name: 'VANTAGE_Strength_Analysis_Template.md', data: strengthAnalysisTemplate(session) },
-    { name: 'VANTAGE_STRENGTH_COACH_PROMPT.md', data: await (await fetch('./VANTAGE_STRENGTH_COACH_PROMPT.md?v=1.5.3')).text() },
+    { name: 'VANTAGE_STRENGTH_COACH_PROMPT.md', data: await (await fetch('./VANTAGE_STRENGTH_COACH_PROMPT.md?v=1.5.4')).text() },
     ...exportMedia.map(item => ({ name: item.archivePath, data: item.blob }))
   ];
   return {
@@ -560,7 +560,7 @@ async function buildRecoveryCoachPack(session) {
     { name: recoveryMarkdownFilename(session), data: markdown },
     { name: 'manifest.json', data: JSON.stringify(manifest, null, 2) },
     { name: 'VANTAGE_Recovery_Analysis_Template.md', data: recoveryAnalysisTemplate(session) },
-    { name: 'VANTAGE_RECOVERY_COACH_PROMPT.md', data: await (await fetch('./VANTAGE_RECOVERY_COACH_PROMPT.md?v=1.5.3')).text() },
+    { name: 'VANTAGE_RECOVERY_COACH_PROMPT.md', data: await (await fetch('./VANTAGE_RECOVERY_COACH_PROMPT.md?v=1.5.4')).text() },
     ...exportMedia.map(item => ({ name: item.archivePath, data: item.blob }))
   ];
   return { blob: await createZip(entries), filename: recoveryCoachPackFilename(session), markdown, manifest, media: preparedMedia };
@@ -7208,7 +7208,7 @@ function bindEvents() {
   });
   $('#copyBloodworkPromptButton').addEventListener('click', async () => {
     try {
-      const response = await fetch('./VANTAGE_BLOODWORK_THREAD_PROMPT.md?v=1.5.3');
+      const response = await fetch('./VANTAGE_BLOODWORK_THREAD_PROMPT.md?v=1.5.4');
       if (!response.ok) throw new Error('Prompt file unavailable');
       await copyText(await response.text());
       toast('Bloodwork Analyzer prompt copied');
@@ -7362,7 +7362,7 @@ async function init() {
   setInterval(checkForLocalDayChange, 60000);
   window.addEventListener('focus', checkForLocalDayChange);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) checkForLocalDayChange(); });
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=1.5.3').catch(console.error);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=1.5.4').catch(console.error);
 }
 
 init().catch(error => {
