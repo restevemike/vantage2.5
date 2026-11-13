@@ -8,6 +8,6 @@ test('v1.5.6 binds all bottom-nav and data-go controls with the multi-selector h
   const app = await read('app.js');
   assert.match(app, /\$\$\('\.bottom-nav button'\)\.forEach/);
   assert.match(app, /\$\$\('\[data-go\]'\)\.forEach/);
-  assert.doesNotMatch(app, /\$\('\.bottom-nav button'\)\.forEach/);
-  assert.doesNotMatch(app, /\$\('\[data-go\]'\)\.forEach/);
+  assert.doesNotMatch(app, /(^|[^$])\$\('\.bottom-nav button'\)\.forEach/m);
+  assert.doesNotMatch(app, /(^|[^$])\$\('\[data-go\]'\)\.forEach/m);
 });
