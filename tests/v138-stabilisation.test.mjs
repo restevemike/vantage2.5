@@ -76,7 +76,7 @@ test('v1.3.8 later historical NOOP values become correction candidates instead o
 test('v1.3.10.6 app shell and migration are versioned without changing PWA identity', async () => {
   const [html,app,sw,manifestText]=await Promise.all([readFile(new URL('../index.html',import.meta.url),'utf8'),readFile(new URL('../app.js',import.meta.url),'utf8'),readFile(new URL('../sw.js',import.meta.url),'utf8'),readFile(new URL('../manifest.webmanifest',import.meta.url),'utf8')]);
   const manifest=JSON.parse(manifestText);
-  assert.match(html,/v1\.5\.4/); assert.match(html,/app\.js\?v=1\.5\.4/); assert.match(sw,/vantage-training-console-v15-4/);
+  assert.match(html,/v1\.5\.5/); assert.match(html,/app\.js\?v=1\.5\.5/); assert.match(sw,/vantage-training-console-v15-5/);
   assert.match(app,/applyV138ExerciseIdentityRepair/); assert.match(app,/mediaHashAudit/); assert.match(app,/metricsConfirmed/);
-  assert.equal(manifest.id,'./vantage-training-console-v133'); assert.equal(manifest.start_url,'./?pwa=154');
+  assert.equal(manifest.id,'./vantage-training-console-v133'); assert.equal(manifest.start_url,'./?pwa=155');
 });
