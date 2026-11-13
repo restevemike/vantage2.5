@@ -2,7 +2,7 @@ import {
   configureCloud, cloudConfig, cloudSession, sendMagicLink, signOutCloud,
   syncCoreIncremental, syncMediaIncremental, syncAllIncremental, rebootstrapFromCloud, pullNewestVitalsFromCloud, cloudSyncStatus,
   pushCoreSnapshot, inspectCloudSnapshot, restoreCoreSnapshot
-} from './cloud-sync.js?v=1.5.6';
+} from './cloud-sync.js?v=1.5.7';
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -264,7 +264,8 @@ function installPanel() {
         result.payload?.restingHr != null ? `RHR ${result.payload.restingHr}` : null,
         result.payload?.systolic ? `BP ${result.payload.systolic}/${result.payload.diastolic || '–'}` : null
       ].filter(Boolean).join(' · ');
-      setStatus(`Vitals pulled from cloud · ${result.date}${summary ? ' · ' + summary : ''}`, 'info');
+      setStatus(`Vitals pulled and verified locally · ${result.date}${summary ? ' · ' + summary : ''} · reloading…`, 'info');
+      setTimeout(() => location.reload(), 900);
     } catch (error) {
       setStatus(`Vitals pull failed: ${error.message}`, 'warning');
     } finally {

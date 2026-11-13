@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 
 const read = path => readFile(new URL('../' + path, import.meta.url), 'utf8');
 
-test('v1.5.6 uses cloud-authoritative bootstrap when remote data exists and no baseline exists', async () => {
+test('v1.5.7 uses cloud-authoritative bootstrap when remote data exists and no baseline exists', async () => {
   const cloud = await read('cloud-sync.js');
   assert.match(cloud, /const bootstrap = Object\.keys\(baseline\)\.length === 0 && remote\.size > 0/);
   assert.match(cloud, /if \(bootstrap\) localWrites\.push\(r\)/);
@@ -12,12 +12,12 @@ test('v1.5.6 uses cloud-authoritative bootstrap when remote data exists and no b
   assert.match(cloud, /bootstrap\n\s*};/);
 });
 
-test('v1.5.6 preserves local-only records during bootstrap', async () => {
+test('v1.5.7 preserves local-only records during bootstrap', async () => {
   const cloud = await read('cloud-sync.js');
   assert.match(cloud, /if \(lf && !rf\) uploads\.push\(l\)/);
 });
 
-test('v1.5.6 retains normal conflict handling after a baseline exists', async () => {
+test('v1.5.7 retains normal conflict handling after a baseline exists', async () => {
   const cloud = await read('cloud-sync.js');
   assert.match(cloud, /else conflicts\.push\(key\)/);
   assert.match(cloud, /conflicts\.push\(key\)/);

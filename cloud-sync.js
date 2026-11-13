@@ -1,4 +1,4 @@
-import * as db from './db.js?v=1.5.6';
+import * as db from './db.js?v=1.5.7';
 
 const CONFIG_KEY = 'vantage-cloud-config-v1';
 const DEFAULT_CLOUD_CONFIG = {
@@ -409,13 +409,20 @@ export async function pullNewestVitalsFromCloud() {
   const baseline = readBaseline(CORE_BASELINE_PREFIX, userId);
   baseline[compositeKey('vitals', newest.record_id)] = newest.fingerprint || await rowFingerprint(newest.payload);
   saveBaseline(CORE_BASELINE_PREFIX, userId, baseline);
+  const localReadback = await db.get('vitals', newest.record_id);
+  if (!localReadback) throw new Error('Cloud vitals write completed but local readback failed.');
+  const expectedFingerprint = newest.fingerprint || await rowFingerprint(newest.payload);
+  const localFingerprint = await rowFingerprint(localReadback);
+  if (localFingerprint !== expectedFingerprint) throw new Error('Cloud vitals local verification failed.');
+
   notifyCloudDataApplied({ kind: 'vitals', downloaded: 1, recordId: newest.record_id, date: newest.payload.date, forced: true });
 
   return {
     recordId: newest.record_id,
     date: newest.payload.date,
     updatedAt: newest.updated_at,
-    payload: newest.payload
+    payload: newest.payload,
+    verifiedLocal: true
   };
 }
 
