@@ -264,7 +264,8 @@ function installPanel() {
         result.payload?.restingHr != null ? `RHR ${result.payload.restingHr}` : null,
         result.payload?.systolic ? `BP ${result.payload.systolic}/${result.payload.diastolic || '–'}` : null
       ].filter(Boolean).join(' · ');
-      setStatus(`Vitals pulled from cloud · ${result.date}${summary ? ' · ' + summary : ''}`, 'info');
+      setStatus(`Vitals pulled and verified locally · ${result.date}${summary ? ' · ' + summary : ''} · reloading…`, 'info');
+      setTimeout(() => location.reload(), 900);
     } catch (error) {
       setStatus(`Vitals pull failed: ${error.message}`, 'warning');
     } finally {
