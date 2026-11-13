@@ -1,6 +1,6 @@
 import {
   configureCloud, cloudConfig, cloudSession, sendMagicLink, signOutCloud,
-  syncCoreIncremental, syncMediaIncremental, syncAllIncremental, cloudSyncStatus,
+  syncCoreIncremental, syncMediaIncremental, syncAllIncremental, rebootstrapFromCloud, cloudSyncStatus,
   pushCoreSnapshot, inspectCloudSnapshot, restoreCoreSnapshot
 } from './cloud-sync.js?v=1.5.3';
 
@@ -39,11 +39,12 @@ function panelHtml() {
       <div class="data-actions">
         <button id="cloudSyncCore" class="button button-success button-wide" type="button" disabled>Sync core records</button>
         <button id="cloudSyncMedia" class="button button-primary button-wide" type="button" disabled>Sync private media</button>
+        <button id="cloudRebootstrap" class="button button-ghost button-wide" type="button" disabled>Re-bootstrap this device from cloud</button>
         <button id="cloudPushSnapshot" class="button button-ghost button-wide" type="button" disabled>Create fallback snapshot</button>
         <button id="cloudRestoreSnapshot" class="button button-ghost button-wide" type="button" disabled>Restore fallback snapshot</button>
       </div>
       <div id="cloudSyncStatus" class="import-status" aria-live="polite"><div class="empty-state compact-empty">No cloud sync completed yet.</div></div>
-      <p class="camera-storage-note"><strong>Phase 2C:</strong> saves trigger a debounced background sync when signed in and online. Manual sync buttons remain available. Conflicting edits are reported instead of silently overwritten.</p>
+      <p class="camera-storage-note"><strong>Phase 2C:</strong> saves trigger a debounced background sync when signed in and online. Use <strong>Re-bootstrap this device</strong> only when a newly connected device has stale matching records; cloud copies replace matching IDs while local-only records are preserved.</p>
     </section>`;
 }
 
@@ -134,6 +135,7 @@ async function refreshAuth() {
   const restore = document.querySelector('#cloudRestoreSnapshot');
   const syncCore = document.querySelector('#cloudSyncCore');
   const syncMedia = document.querySelector('#cloudSyncMedia');
+  const rebootstrap = document.querySelector('#cloudRebootstrap');
   const signOut = document.querySelector('#cloudSignOut');
   const badge = document.querySelector('#cloudSyncBadge');
   try {
@@ -144,6 +146,7 @@ async function refreshAuth() {
       restore.disabled = false;
       syncCore.disabled = false;
       syncMedia.disabled = false;
+      rebootstrap.disabled = false;
       signOut.hidden = false;
       badge.textContent = 'Cloud connected';
       scheduleAutoSync(null, 1500);
@@ -163,15 +166,16 @@ async function refreshAuth() {
   restore.disabled = true;
   syncCore.disabled = true;
   syncMedia.disabled = true;
+  rebootstrap.disabled = true;
   signOut.hidden = true;
   badge.textContent = 'Local-first';
 }
 
 function installPanel() {
   if (document.querySelector('#cloudSyncPanel')) return;
-  const anchor = document.querySelector('#exportJsonButton')?.closest('section');
-  if (!anchor) return;
-  anchor.insertAdjacentHTML('beforebegin', panelHtml());
+  const host = document.querySelector('#cloudSyncHost');
+  if (!host) return;
+  host.innerHTML = panelHtml();
 
   document.querySelector('#cloudSaveConfig')?.addEventListener('click', async () => {
     const button = document.querySelector('#cloudSaveConfig');
@@ -237,6 +241,25 @@ function installPanel() {
       setStatus(`Private media sync complete · uploaded ${result.uploaded} · downloaded ${result.downloaded}${conflicts}`, result.conflicts?.length ? 'warning' : 'info');
     } catch (error) {
       setStatus(`Media sync failed: ${error.message}`, 'warning');
+    } finally {
+      setBusy(button, false);
+      button.disabled = false;
+    }
+  });
+
+
+  document.querySelector('#cloudRebootstrap')?.addEventListener('click', async () => {
+    if (!confirm('Re-bootstrap this device from cloud? Matching record IDs on this device will be replaced by the cloud copy. Local-only records will be preserved and uploaded.')) return;
+    const button = document.querySelector('#cloudRebootstrap');
+    try {
+      setBusy(button, true, 'Re-bootstrapping…');
+      const result = await rebootstrapFromCloud();
+      const core = result.core || {};
+      const media = result.media || {};
+      const conflicts = [...(core.conflicts || []), ...(media.conflicts || [])];
+      setStatus(`Device re-bootstrap complete · core downloaded ${core.downloaded || 0} · media downloaded ${media.downloaded || 0} · uploaded ${Number(core.uploaded || 0) + Number(media.uploaded || 0)}${conflicts.length ? ` · conflicts ${conflicts.length}` : ' · no conflicts'}`, conflicts.length ? 'warning' : 'info');
+    } catch (error) {
+      setStatus(`Re-bootstrap failed: ${error.message}`, 'warning');
     } finally {
       setBusy(button, false);
       button.disabled = false;
