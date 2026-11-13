@@ -1,4 +1,4 @@
-import * as db from './db.js?v=1.5.4';
+import * as db from './db.js?v=1.5.5';
 
 const CONFIG_KEY = 'vantage-cloud-config-v1';
 const DEFAULT_CLOUD_CONFIG = {
