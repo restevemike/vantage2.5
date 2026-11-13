@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 
 const read = path => readFile(new URL('../' + path, import.meta.url), 'utf8');
 
-test('v1.5.1 ships Phase 2B incremental cloud sync and OTP UI', async () => {
+test('v1.5.2 ships Phase 2B incremental cloud sync and OTP UI', async () => {
   const [cloud, ui, html, sw, manifestText, pkgText] = await Promise.all([
     read('cloud-sync.js'), read('cloud-sync-ui.js'), read('index.html'),
     read('sw.js'), read('manifest.webmanifest'), read('package.json')
@@ -16,21 +16,19 @@ test('v1.5.1 ships Phase 2B incremental cloud sync and OTP UI', async () => {
   assert.match(cloud, /syncMediaIncremental/);
   assert.match(cloud, /vantage_cloud_records/);
   assert.match(cloud, /vantage_cloud_media/);
-  assert.match(cloud, /vantage-media/);
-  assert.match(cloud, /verifyOtp/);
-  assert.match(cloud, /type:\s*'email'/);
+  assert.match(cloud, /vantage-media/);\n  assert.match(cloud, /emailRedirectTo/);\n  assert.match(ui, /Email sign-in link/);
+    assert.match(cloud, /type:\s*'email'/);
   assert.match(cloud, /conflicts/);
 
   assert.match(ui, /Phase 2B/);
-  assert.match(ui, /Email verification code/);
-  assert.match(ui, /Sync core records/);
+    assert.match(ui, /Sync core records/);
   assert.match(ui, /Sync private media/);
 
-  assert.match(html, /v1\.5\.1/);
-  assert.match(html, /app\.js\?v=1\.5\.1/);
-  assert.match(sw, /vantage-training-console-v15-1/);
-  assert.equal(manifest.start_url, './?pwa=151');
-  assert.equal(pkg.version, '1.5.1');
+  assert.match(html, /v1\.5\.2/);
+  assert.match(html, /app\.js\?v=1\.5\.2/);
+  assert.match(sw, /vantage-training-console-v15-2/);
+  assert.equal(manifest.start_url, './?pwa=152');
+  assert.equal(pkg.version, '1.5.2');
 });
 
 test('Phase 2B keeps Phase 2A fallback snapshot restore available', async () => {
