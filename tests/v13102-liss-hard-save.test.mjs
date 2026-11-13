@@ -36,6 +36,6 @@ test('v1.3.10.6 app shell and service worker are cache-busted', async () => {
   ]);
   assert.match(html, /v1\.4\.3/);
   assert.match(html, /app\.js\?v=1\.4\.3/);
-  assert.match(sw, /vantage-training-console-v14-3/);
-  assert.equal(JSON.parse(pkg).version, '1.4.3');
+  assert.match(sw, /vantage-training-console-v14-4/);
+  assert.equal(JSON.parse(pkg).version, '1.4.4');
 });
