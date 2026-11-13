@@ -1004,6 +1004,17 @@
       <div id="historyList" class="history-list"></div>
     </section>
 
+
+    <section id="cloudScreen" class="screen" data-screen="cloud">
+      <div class="screen-heading">
+        <div>
+          <p class="eyebrow">Multi-device</p>
+          <h2>Cloud</h2>
+        </div>
+      </div>
+      <div id="cloudSyncHost"></div>
+    </section>
+
     <section id="dataScreen" class="screen" data-screen="data">
       <div class="screen-heading">
         <div>
@@ -1167,6 +1178,12 @@
         <button id="applyWorkbookImportButton" class="button button-success button-wide" hidden>Import workbook data</button>
       </section>
 
+      <section class="panel data-actions">
+        <h3>Cloud sync</h3>
+        <p>Account, device sync, private media and re-bootstrap controls now live on the dedicated Cloud tab.</p>
+        <button class="button button-primary button-wide" type="button" data-go="cloud">Open Cloud</button>
+      </section>
+
       <section class="panel data-actions coach-panel">
         <h3>VANTAGE Coach bridge</h3>
         <p>Create a privacy-controlled Coach Pack containing today’s selected app data, then share or paste it into the VANTAGE Coach thread in this project.</p>
@@ -1216,6 +1233,7 @@
     <button data-nav="supplements"><span>＋</span>Supps</button>
     <button data-nav="metrics"><span>▥</span>Metrics</button>
     <button data-nav="biolab"><span>◉</span>BioLab</button>
+    <button data-nav="cloud"><span>☁</span>Cloud</button>
     <button data-nav="data"><span>⇅</span>Data</button>
   </nav>
 
