@@ -13,5 +13,5 @@ test('v1.3.10.6 startup does not reference removed FTMS renderer', () => {
 test('v1.3.10.6 cache-busts the broken v1.3.10 shell', () => {
   assert.match(html, /v1\.4\.3/);
   assert.match(html, /app\.js\?v=1\.4\.3/);
-  assert.match(sw, /vantage-training-console-v14-3/);
+  assert.match(sw, /vantage-training-console-v14-4/);
 });
