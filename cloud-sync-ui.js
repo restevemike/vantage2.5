@@ -1,7 +1,8 @@
 import {
-  configureCloud, cloudConfig, cloudSession, sendMagicLink, signOutCloud,
+  configureCloud, cloudConfig, cloudSession, requestEmailOtp, verifyEmailOtp, signOutCloud,
+  syncCoreIncremental, syncMediaIncremental, cloudSyncStatus,
   pushCoreSnapshot, inspectCloudSnapshot, restoreCoreSnapshot
-} from './cloud-sync.js?v=1.4.4';
+} from './cloud-sync.js?v=1.5.0';
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -12,10 +13,10 @@ function panelHtml() {
   return `
     <section id="cloudSyncPanel" class="panel data-actions">
       <div class="panel-heading">
-        <div><p class="eyebrow">Phase 2A</p><h3>VANTAGE Cloud Sync</h3></div>
+        <div><p class="eyebrow">Phase 2B</p><h3>VANTAGE Cloud Sync</h3></div>
         <span id="cloudSyncBadge" class="source-badge">Local-first</span>
       </div>
-      <p>Secure account-based cloud snapshot for VANTAGE core data. Local IndexedDB remains primary. Photos/media are deliberately excluded in Phase 2A and remain on this device.</p>
+      <p>Incremental two-way cloud sync for VANTAGE core records plus private media backup. Local IndexedDB remains the working database.</p>
       <details id="cloudConfigDetails">
         <summary>Cloud connection</summary>
         <div class="form-grid">
@@ -27,20 +28,24 @@ function panelHtml() {
 
       <div class="form-grid">
         <label class="full-width">Account email<input id="cloudEmail" type="email" autocomplete="email" placeholder="you@example.com"></label>
+        <label class="full-width">Email verification code<input id="cloudOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="6-digit code"></label>
       </div>
       <div class="data-actions">
-        <button id="cloudSendLink" class="button button-primary button-wide" type="button">Email sign-in link</button>
+        <button id="cloudSendLink" class="button button-primary button-wide" type="button">Email verification code</button>
+        <button id="cloudVerifyCode" class="button button-success button-wide" type="button">Verify code & sign in</button>
         <button id="cloudSignOut" class="button button-ghost button-wide" type="button" hidden>Sign out</button>
       </div>
 
       <div id="cloudAccountStatus" class="import-summary"><div class="empty-state compact-empty">Cloud account not connected.</div></div>
 
       <div class="data-actions">
-        <button id="cloudPushSnapshot" class="button button-success button-wide" type="button" disabled>Sync core data now</button>
-        <button id="cloudRestoreSnapshot" class="button button-ghost button-wide" type="button" disabled>Restore core data from cloud</button>
+        <button id="cloudSyncCore" class="button button-success button-wide" type="button" disabled>Sync core records</button>
+        <button id="cloudSyncMedia" class="button button-primary button-wide" type="button" disabled>Sync private media</button>
+        <button id="cloudPushSnapshot" class="button button-ghost button-wide" type="button" disabled>Create fallback snapshot</button>
+        <button id="cloudRestoreSnapshot" class="button button-ghost button-wide" type="button" disabled>Restore fallback snapshot</button>
       </div>
       <div id="cloudSyncStatus" class="import-status" aria-live="polite"><div class="empty-state compact-empty">No cloud sync completed yet.</div></div>
-      <p class="camera-storage-note"><strong>Phase 2A:</strong> sessions, vitals, meals, templates, settings, exercises, nutrition summaries, recovery, bloodwork, measurements, cycles, supplements and programmes sync. Session/exercise/supplement images do not sync yet.</p>
+      <p class="camera-storage-note"><strong>Phase 2B:</strong> core records sync incrementally. Session, exercise and supplement images are stored in a private user-scoped Supabase bucket. Conflicting edits are reported instead of silently overwritten.</p>
     </section>`;
 }
 
@@ -65,6 +70,8 @@ async function refreshAuth() {
   const account = document.querySelector('#cloudAccountStatus');
   const push = document.querySelector('#cloudPushSnapshot');
   const restore = document.querySelector('#cloudRestoreSnapshot');
+  const syncCore = document.querySelector('#cloudSyncCore');
+  const syncMedia = document.querySelector('#cloudSyncMedia');
   const signOut = document.querySelector('#cloudSignOut');
   const badge = document.querySelector('#cloudSyncBadge');
   try {
@@ -73,11 +80,15 @@ async function refreshAuth() {
       account.innerHTML = `<div class="alert alert-info"><strong>Signed in</strong><br>${escapeHtml(session.user.email || session.user.id)}</div>`;
       push.disabled = false;
       restore.disabled = false;
+      syncCore.disabled = false;
+      syncMedia.disabled = false;
       signOut.hidden = false;
       badge.textContent = 'Cloud connected';
-      const remote = await inspectCloudSnapshot();
-      if (remote) {
-        setStatus(`Cloud snapshot available · schema ${remote.schema_version} · updated ${new Date(remote.updated_at).toLocaleString('en-GB')}`, 'info');
+      try {
+        const status = await cloudSyncStatus();
+        setStatus(`Cloud ready · ${status.coreRecords} core records · ${status.mediaRecords} media records`, 'info');
+      } catch (error) {
+        setStatus(`Signed in, but Phase 2B storage is not ready: ${error.message}`, 'warning');
       }
       return;
     }
@@ -87,6 +98,8 @@ async function refreshAuth() {
   account.innerHTML = '<div class="empty-state compact-empty">Cloud account not signed in.</div>';
   push.disabled = true;
   restore.disabled = true;
+  syncCore.disabled = true;
+  syncMedia.disabled = true;
   signOut.hidden = true;
   badge.textContent = 'Local-first';
 }
@@ -119,8 +132,24 @@ function installPanel() {
     const button = document.querySelector('#cloudSendLink');
     try {
       setBusy(button, true, 'Sending…');
-      await sendMagicLink(document.querySelector('#cloudEmail').value);
-      setStatus('Sign-in link sent. Open it on this device to connect VANTAGE.', 'info');
+      const result = await requestEmailOtp(document.querySelector('#cloudEmail').value);
+      setStatus(`Verification email sent to ${result.email}. Enter the code above.`, 'info');
+      document.querySelector('#cloudOtp')?.focus();
+    } catch (error) {
+      setStatus(error.message, 'warning');
+    } finally {
+      setBusy(button, false);
+      button.disabled = false;
+    }
+  });
+
+  document.querySelector('#cloudVerifyCode')?.addEventListener('click', async () => {
+    const button = document.querySelector('#cloudVerifyCode');
+    try {
+      setBusy(button, true, 'Verifying…');
+      await verifyEmailOtp(document.querySelector('#cloudEmail').value, document.querySelector('#cloudOtp').value);
+      setStatus('Email verified. VANTAGE cloud account connected.', 'info');
+      await refreshAuth();
     } catch (error) {
       setStatus(error.message, 'warning');
     } finally {
@@ -135,6 +164,36 @@ function installPanel() {
       setStatus('Signed out. Local VANTAGE data is unchanged.', 'info');
       await refreshAuth();
     } catch (error) { setStatus(error.message, 'warning'); }
+  });
+
+  document.querySelector('#cloudSyncCore')?.addEventListener('click', async () => {
+    const button = document.querySelector('#cloudSyncCore');
+    try {
+      setBusy(button, true, 'Syncing records…');
+      const result = await syncCoreIncremental();
+      const conflicts = result.conflicts?.length ? ` · conflicts ${result.conflicts.length}` : ' · no conflicts';
+      setStatus(`Core sync complete · uploaded ${result.uploaded} · downloaded ${result.downloaded}${conflicts}`, result.conflicts?.length ? 'warning' : 'info');
+    } catch (error) {
+      setStatus(`Core sync failed: ${error.message}`, 'warning');
+    } finally {
+      setBusy(button, false);
+      button.disabled = false;
+    }
+  });
+
+  document.querySelector('#cloudSyncMedia')?.addEventListener('click', async () => {
+    const button = document.querySelector('#cloudSyncMedia');
+    try {
+      setBusy(button, true, 'Syncing media…');
+      const result = await syncMediaIncremental();
+      const conflicts = result.conflicts?.length ? ` · conflicts ${result.conflicts.length}` : ' · no conflicts';
+      setStatus(`Private media sync complete · uploaded ${result.uploaded} · downloaded ${result.downloaded}${conflicts}`, result.conflicts?.length ? 'warning' : 'info');
+    } catch (error) {
+      setStatus(`Media sync failed: ${error.message}`, 'warning');
+    } finally {
+      setBusy(button, false);
+      button.disabled = false;
+    }
   });
 
   document.querySelector('#cloudPushSnapshot')?.addEventListener('click', async () => {
