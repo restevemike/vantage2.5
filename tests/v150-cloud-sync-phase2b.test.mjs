@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 
 const read = path => readFile(new URL('../' + path, import.meta.url), 'utf8');
 
-test('v1.5.5 ships incremental cloud sync with explicit magic-link redirect', async () => {
+test('v1.5.6 ships incremental cloud sync with explicit magic-link redirect', async () => {
   const [cloud, ui, html, sw, manifestText, pkgText] = await Promise.all([
     read('cloud-sync.js'), read('cloud-sync-ui.js'), read('index.html'),
     read('sw.js'), read('manifest.webmanifest'), read('package.json')
@@ -26,11 +26,11 @@ test('v1.5.5 ships incremental cloud sync with explicit magic-link redirect', as
   assert.match(ui, /Sync core records/);
   assert.match(ui, /Sync private media/);
 
-  assert.match(html, /v1\.5\.5/);
-  assert.match(html, /app\.js\?v=1\.5\.5/);
-  assert.match(sw, /vantage-training-console-v15-5/);
-  assert.equal(manifest.start_url, './?pwa=155');
-  assert.equal(pkg.version, '1.5.5');
+  assert.match(html, /v1\.5\.6/);
+  assert.match(html, /app\.js\?v=1\.5\.6/);
+  assert.match(sw, /vantage-training-console-v15-6/);
+  assert.equal(manifest.start_url, './?pwa=156');
+  assert.equal(pkg.version, '1.5.6');
 });
 
 test('Phase 2B keeps Phase 2A fallback snapshot restore available', async () => {
