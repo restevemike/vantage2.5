@@ -133,8 +133,8 @@ test('v1.3.3 UI exposes per-image OCR, hydration correction and cache-busted lau
   assert.match(html, /id="lissAminoAcids"/);
   assert.match(html, /id="lissMacroCorrection"/);
   assert.match(app, /openOcrReview\('liss', item\.id\)/);
-  assert.match(sw, /vantage-training-console-v15-4/);
+  assert.match(sw, /vantage-training-console-v15-5/);
   assert.equal(manifest.id, './vantage-training-console-v133');
-  assert.equal(manifest.start_url, './?pwa=154');
+  assert.equal(manifest.start_url, './?pwa=155');
   assert.equal(manifest.icons[0].src, 'icons/vantage-icon-192-v133.png');
 });
