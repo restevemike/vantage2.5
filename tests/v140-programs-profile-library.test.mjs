@@ -34,8 +34,8 @@ test('v1.4.0 database adds profile-scoped programs without changing PWA identity
   assert.match(db,/schemaVersion: 12/);
   const manifest=JSON.parse(manifestText); const pkg=JSON.parse(pkgText);
   assert.equal(manifest.id,'./vantage-training-console-v133');
-  assert.equal(manifest.start_url,'./?pwa=156');
-  assert.equal(pkg.version,'1.5.6');
+  assert.equal(manifest.start_url,'./?pwa=157');
+  assert.equal(pkg.version,'1.5.7');
 });
 
 test('v1.4.0 UI exposes phases, program builder, routine builder, module toggles and historical import', async () => {
@@ -50,7 +50,7 @@ test('v1.4.0 app migrates current split and supports extensible phases/program p
 
 test('v1.4.0 service worker caches program and exercise modules', async () => {
   const sw=await readFile(new URL('../sw.js',import.meta.url),'utf8');
-  assert.match(sw,/vantage-training-console-v15-6/);
+  assert.match(sw,/vantage-training-console-v15-7/);
   assert.match(sw,/exercise-catalogue\.js/);
   assert.match(sw,/programs\.js/);
 });
