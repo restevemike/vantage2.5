@@ -1,5 +1,5 @@
 import {
-  configureCloud, cloudConfig, cloudSession, requestEmailOtp, verifyEmailOtp, signOutCloud,
+  configureCloud, cloudConfig, cloudSession, sendMagicLink, signOutCloud,
   syncCoreIncremental, syncMediaIncremental, syncAllIncremental, cloudSyncStatus,
   pushCoreSnapshot, inspectCloudSnapshot, restoreCoreSnapshot
 } from './cloud-sync.js?v=1.5.1';
@@ -16,7 +16,7 @@ function panelHtml() {
         <div><p class="eyebrow">Phase 2C</p><h3>VANTAGE Cloud Sync</h3></div>
         <span id="cloudSyncBadge" class="source-badge">Local-first</span>
       </div>
-      <p>Automatic local-first cloud sync for VANTAGE records and private media. IndexedDB remains the working database; changes sync after a short delay when online.</p>
+      <p>Automatic local-first cloud sync for VANTAGE records and private media. Sign in with a magic link; IndexedDB remains the working database and changes sync after a short delay when online.</p>
       <details id="cloudConfigDetails">
         <summary>Cloud connection</summary>
         <div class="form-grid">
@@ -28,11 +28,9 @@ function panelHtml() {
 
       <div class="form-grid">
         <label class="full-width">Account email<input id="cloudEmail" type="email" autocomplete="email" placeholder="you@example.com"></label>
-        <label class="full-width">Email verification code<input id="cloudOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="6-digit code"></label>
       </div>
       <div class="data-actions">
-        <button id="cloudSendLink" class="button button-primary button-wide" type="button">Email verification code</button>
-        <button id="cloudVerifyCode" class="button button-success button-wide" type="button">Verify code & sign in</button>
+        <button id="cloudSendLink" class="button button-primary button-wide" type="button">Email sign-in link</button>
         <button id="cloudSignOut" class="button button-ghost button-wide" type="button" hidden>Sign out</button>
       </div>
 
@@ -197,24 +195,8 @@ function installPanel() {
     const button = document.querySelector('#cloudSendLink');
     try {
       setBusy(button, true, 'Sending…');
-      const result = await requestEmailOtp(document.querySelector('#cloudEmail').value);
-      setStatus(`Verification email sent to ${result.email}. Enter the code above.`, 'info');
-      document.querySelector('#cloudOtp')?.focus();
-    } catch (error) {
-      setStatus(error.message, 'warning');
-    } finally {
-      setBusy(button, false);
-      button.disabled = false;
-    }
-  });
-
-  document.querySelector('#cloudVerifyCode')?.addEventListener('click', async () => {
-    const button = document.querySelector('#cloudVerifyCode');
-    try {
-      setBusy(button, true, 'Verifying…');
-      await verifyEmailOtp(document.querySelector('#cloudEmail').value, document.querySelector('#cloudOtp').value);
-      setStatus('Email verified. VANTAGE cloud account connected.', 'info');
-      await refreshAuth();
+      const result = await sendMagicLink(document.querySelector('#cloudEmail').value);
+      setStatus(`Sign-in link sent to ${result.email}. Open the newest email on this device; it will return to VANTAGE.`, 'info');
     } catch (error) {
       setStatus(error.message, 'warning');
     } finally {
