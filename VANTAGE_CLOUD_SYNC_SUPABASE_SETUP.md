@@ -1,114 +1,73 @@
-# VANTAGE Cloud Sync — Supabase Phase 2A setup
+# VANTAGE Cloud Sync — Supabase Phase 2B setup
 
-This is the backend setup for the `feature/cloud-sync` branch.
+Phase 2B extends the existing Phase 2A snapshot safety net with incremental two-way record sync, private media sync and email OTP verification.
 
-## What Phase 2A syncs
+## Backend state
 
-Core VANTAGE IndexedDB stores are stored as one user-scoped JSON snapshot in Postgres.
+The live VANTAGE Supabase project now contains:
 
-**Included:** sessions, vitals, meals, templates, settings, exercises, nutritionDays, recoveryLogs, bloodTests, bloodAnalyses, bodyMeasurements, trainingCycles, supplements, supplementEvents and programs.
+- `vantage_cloud_snapshots` — Phase 2A fallback snapshot table.
+- `vantage_cloud_records` — user-scoped incremental core records.
+- `vantage_cloud_media` — user-scoped media metadata.
+- Private Storage bucket `vantage-media`.
+- RLS policies restricting rows and media paths to `auth.uid()`.
+- A 15 MB per-file Storage limit.
 
-**Excluded for Phase 2A:** sessionMedia, exerciseMedia and supplementMedia. These stay local until the private Storage phase.
+The browser uses only the Supabase publishable key. Never put a service-role key in the app.
 
-## 1. Create a Supabase project
+## What Phase 2B syncs
 
-Create a project, then copy:
+**Core records:** sessions, vitals, meals, templates, settings, exercises, nutritionDays, recoveryLogs, bloodTests, bloodAnalyses, bodyMeasurements, trainingCycles, supplements, supplementEvents and programs.
 
-- Project URL
-- Publishable key (or legacy anon key)
+**Private media:** sessionMedia, exerciseMedia and supplementMedia.
 
-Do **not** use a service-role key in the browser.
+IndexedDB remains the local working database. Cloud sync is explicit rather than background/automatic in this phase.
 
-## 2. Auth URL configuration
+## Conflict behaviour
 
-In Supabase Auth URL configuration, add the production VANTAGE URL:
+VANTAGE stores a local fingerprint baseline after a successful sync.
+
+- Local-only change → upload.
+- Cloud-only change → download.
+- Local deletion with unchanged cloud copy → delete cloud copy.
+- Cloud deletion with unchanged local copy → delete local copy.
+- Independent changes to the same record on both sides → **conflict**.
+
+Conflicts are deliberately not auto-resolved. Both sides remain untouched until reviewed.
+
+## Email OTP requirement
+
+The app now supports `signInWithOtp()` + `verifyOtp()` for email codes.
+
+Supabase's email template must expose the OTP token. In **Authentication → Email Templates → Magic Link**, use the token variable in the email body (for example `{{ .Token }}`) rather than relying only on the confirmation URL.
+
+Until that one-time Auth template change is made, Supabase may continue sending its normal sign-in link. Clicking that link still authenticates the browser, but the numeric-code UX will not be complete.
+
+## Production URL
+
+Keep this in the Supabase Auth redirect allow-list:
 
 `https://restevemike.github.io/vantage2.5/`
 
-For testing the feature branch via another origin, add that origin separately.
+## Test sequence
 
-## 3. Run this SQL
-
-```sql
-create table if not exists public.vantage_cloud_snapshots (
-  user_id uuid primary key references auth.users(id) on delete cascade,
-  schema_version integer not null,
-  snapshot_format text not null,
-  payload jsonb not null,
-  record_counts jsonb not null default '{}'::jsonb,
-  client_updated_at timestamptz,
-  updated_at timestamptz not null default now()
-);
-
-alter table public.vantage_cloud_snapshots enable row level security;
-
-revoke all on public.vantage_cloud_snapshots from anon;
-revoke all on public.vantage_cloud_snapshots from authenticated;
-grant select, insert, update, delete on public.vantage_cloud_snapshots to authenticated;
-
-drop policy if exists "VANTAGE users read own snapshot" on public.vantage_cloud_snapshots;
-create policy "VANTAGE users read own snapshot"
-on public.vantage_cloud_snapshots
-for select
-to authenticated
-using ((select auth.uid()) = user_id);
-
-drop policy if exists "VANTAGE users insert own snapshot" on public.vantage_cloud_snapshots;
-create policy "VANTAGE users insert own snapshot"
-on public.vantage_cloud_snapshots
-for insert
-to authenticated
-with check ((select auth.uid()) = user_id);
-
-drop policy if exists "VANTAGE users update own snapshot" on public.vantage_cloud_snapshots;
-create policy "VANTAGE users update own snapshot"
-on public.vantage_cloud_snapshots
-for update
-to authenticated
-using ((select auth.uid()) = user_id)
-with check ((select auth.uid()) = user_id);
-
-drop policy if exists "VANTAGE users delete own snapshot" on public.vantage_cloud_snapshots;
-create policy "VANTAGE users delete own snapshot"
-on public.vantage_cloud_snapshots
-for delete
-to authenticated
-using ((select auth.uid()) = user_id);
-
-create or replace function public.set_vantage_cloud_updated_at()
-returns trigger
-language plpgsql
-set search_path = ''
-as $$
-begin
-  new.updated_at = now();
-  return new;
-end;
-$$;
-
-drop trigger if exists set_vantage_cloud_updated_at on public.vantage_cloud_snapshots;
-create trigger set_vantage_cloud_updated_at
-before update on public.vantage_cloud_snapshots
-for each row execute function public.set_vantage_cloud_updated_at();
-```
-
-## 4. Test sequence
-
-1. Open VANTAGE.
-2. Data → VANTAGE Cloud Sync.
-3. Enter project URL and publishable key.
-4. Enter email and request the sign-in link.
-5. Open the email link on the same device.
-6. Return to Data and confirm **Cloud connected**.
-7. Select **Sync core data now**.
-8. Verify one row exists in `vantage_cloud_snapshots`.
-9. On a disposable browser profile/device, sign in and use **Restore core data from cloud**.
-10. Verify workouts, vitals, meals/macros, recovery, bloodwork, measurements, cycles, supplements and programs are present.
+1. Open VANTAGE → Data → VANTAGE Cloud Sync.
+2. Enter the account email and request a verification email.
+3. Enter the code and select **Verify code & sign in**.
+4. Run **Sync core records**.
+5. Confirm the first device uploads records to `vantage_cloud_records`.
+6. Run **Sync private media**.
+7. Confirm metadata appears in `vantage_cloud_media` and files appear under the signed-in user's folder in the private `vantage-media` bucket.
+8. On a clean browser profile/device, sign in and run both sync actions.
+9. Confirm records and media download without using the Phase 2A restore.
+10. Modify the same test record independently on both devices and confirm VANTAGE reports a conflict instead of overwriting either copy.
+11. Confirm **Create fallback snapshot** and **Restore fallback snapshot** still work as the rollback path.
 
 ## Security notes
 
-- The browser only receives the Supabase publishable/anon key.
-- RLS restricts each snapshot row to `auth.uid() = user_id`.
-- The public GitHub repository contains no VANTAGE user data.
-- JSON backup/export remains an independent recovery path.
-- Media is deliberately not placed into the Postgres snapshot.
+- The Storage bucket is private.
+- RLS limits database rows to the authenticated user.
+- Storage policies require the first path segment to equal the authenticated user's UUID.
+- The public repository contains no VANTAGE user health data.
+- The publishable key is intentionally browser-safe; the service-role key is never exposed.
+- JSON export remains an independent offline recovery option.
