@@ -1,4 +1,4 @@
-import * as db from './db.js?v=1.5.3';
+import * as db from './db.js?v=1.5.4';
 
 const CONFIG_KEY = 'vantage-cloud-config-v1';
 const DEFAULT_CLOUD_CONFIG = {
@@ -114,6 +114,13 @@ function readBaseline(prefix, userId) {
 function saveBaseline(prefix, userId, value) {
   localStorage.setItem(prefix + userId, JSON.stringify(value));
 }
+function clearBaseline(prefix, userId) {
+  localStorage.removeItem(prefix + userId);
+}
+function notifyCloudDataApplied(detail = {}) {
+  if (typeof globalThis.dispatchEvent !== 'function' || typeof globalThis.CustomEvent === 'undefined') return;
+  globalThis.dispatchEvent(new CustomEvent('vantage-cloud-data-applied', { detail }));
+}
 
 async function localCoreMap() {
   const map = new Map();
@@ -220,6 +227,9 @@ export async function syncCoreIncremental() {
 
   saveBaseline(CORE_BASELINE_PREFIX, userId, nextBaseline);
   localStorage.setItem('vantage-cloud-last-incremental-sync', new Date().toISOString());
+  if (localWrites.length || localDeletes.filter(Boolean).length) {
+    notifyCloudDataApplied({ kind: 'core', downloaded: localWrites.length, deleted: localDeletes.filter(Boolean).length, bootstrap });
+  }
   return {
     uploaded: uploads.length,
     downloaded: localWrites.length,
@@ -363,6 +373,9 @@ export async function syncMediaIncremental() {
 
   saveBaseline(MEDIA_BASELINE_PREFIX, userId, nextBaseline);
   localStorage.setItem('vantage-cloud-last-media-sync', new Date().toISOString());
+  if (downloads.length || localDeletes.filter(Boolean).length) {
+    notifyCloudDataApplied({ kind: 'media', downloaded: downloads.length, deleted: localDeletes.filter(Boolean).length, bootstrap });
+  }
   return {
     uploaded: uploads.length, downloaded: downloads.length,
     remoteDeleted: remoteDeletes.filter(Boolean).length,
@@ -370,6 +383,17 @@ export async function syncMediaIncremental() {
     conflicts: conflicts.map(key => key.replace('\u0000', ':')),
     bootstrap
   };
+}
+
+export async function rebootstrapFromCloud() {
+  const { session } = await requireSession();
+  const userId = session.user.id;
+  clearBaseline(CORE_BASELINE_PREFIX, userId);
+  clearBaseline(MEDIA_BASELINE_PREFIX, userId);
+  localStorage.removeItem('vantage-cloud-last-incremental-sync');
+  localStorage.removeItem('vantage-cloud-last-media-sync');
+  const result = await syncAllIncremental();
+  return { ...result, rebootstrap: true };
 }
 
 export async function syncAllIncremental() {

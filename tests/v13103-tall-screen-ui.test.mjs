@@ -23,8 +23,8 @@ test('v1.3.10.6 has geometry-based tall portrait optimisation', () => {
 });
 
 test('v1.3.10.6 cache busts UI assets without changing origin identity', () => {
-  assert.equal(pkg.version, '1.5.3');
-  assert.match(html, /v1\.5\.3/);
-  assert.match(html, /app\.js\?v=1\.5\.3/);
-  assert.match(sw, /vantage-training-console-v15-3/);
+  assert.equal(pkg.version, '1.5.4');
+  assert.match(html, /v1\.5\.4/);
+  assert.match(html, /app\.js\?v=1\.5\.4/);
+  assert.match(sw, /vantage-training-console-v15-4/);
 });
