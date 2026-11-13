@@ -2,7 +2,7 @@ name: Test VANTAGE Cloud Sync
 
 on:
   push:
-    branches: ["feature/cloud-sync", "feature/cloud-sync-phase2b"]
+    branches: ["feature/cloud-sync", "feature/cloud-sync-phase2b", "feature/cloud-sync-phase2c"]
   workflow_dispatch:
 
 permissions:
