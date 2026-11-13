@@ -2,7 +2,7 @@
   "name": "Vantage Training Console",
   "short_name": "Vantage",
   "description": "Local-first training, readiness, nutrition, recovery and health analytics.",
-  "start_url": "./?pwa=140",
+  "start_url": "./?pwa=144",
   "scope": "./",
   "display": "standalone",
   "background_color": "#111315",

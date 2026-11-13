@@ -1,9 +1,9 @@
-const CACHE = 'vantage-training-console-v14-3';
+const CACHE = 'vantage-training-console-v14-4';
 const APP_SHELL = [
   './', './index.html', './styles.css', './app.js', './db.js', './seed.js',
   './readiness.js', './ftms-bluetooth.js', './historical-import.js', './exercise-catalogue.js', './programs.js', './workout-history.js', './strength-integrity.js', './evidence-integrity.js', './xlsx-import.js', './vitals-markdown.js', './workout-markdown.js', './nutrition-markdown.js', './liss-markdown.js', './recovery-markdown.js', './zip-pack.js',
   './bloodwork-markdown.js', './ocr-engine.js', './metrics-engine.js', './strength-analysis.js', './VANTAGE_BLOODWORK_THREAD_PROMPT.md', './VANTAGE_STRENGTH_COACH_PROMPT.md', './VANTAGE_LISS_COACH_PROMPT.md', './VANTAGE_RECOVERY_COACH_PROMPT.md',
-  './manifest.webmanifest', './icons/vantage-icon-192-v133.png', './icons/vantage-icon-512-v133.png', './icons/vantage-app-icon-dark.svg', './icons/vantage-full-logo.svg'
+  './cloud-sync.js', './cloud-sync-ui.js', './manifest.webmanifest', './icons/vantage-icon-192-v133.png', './icons/vantage-icon-512-v133.png', './icons/vantage-app-icon-dark.svg', './icons/vantage-full-logo.svg'
 ];
 
 self.addEventListener('install', event => {
