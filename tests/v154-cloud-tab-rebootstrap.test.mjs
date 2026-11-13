@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 
 const read = path => readFile(new URL('../' + path, import.meta.url), 'utf8');
 
-test('v1.5.4 exposes Cloud as a first-class screen and nav tab', async () => {
+test('v1.5.5 exposes Cloud as a first-class screen and nav tab', async () => {
   const [html, ui] = await Promise.all([read('index.html'), read('cloud-sync-ui.js')]);
   assert.match(html, /data-screen="cloud"/);
   assert.match(html, /data-nav="cloud"/);
@@ -13,7 +13,7 @@ test('v1.5.4 exposes Cloud as a first-class screen and nav tab', async () => {
   assert.match(ui, /#cloudSyncHost/);
 });
 
-test('v1.5.4 supports safe device rebootstrap from cloud', async () => {
+test('v1.5.5 supports safe device rebootstrap from cloud', async () => {
   const [cloud, ui] = await Promise.all([read('cloud-sync.js'), read('cloud-sync-ui.js')]);
   assert.match(cloud, /rebootstrapFromCloud/);
   assert.match(cloud, /clearBaseline\(CORE_BASELINE_PREFIX/);
@@ -22,7 +22,7 @@ test('v1.5.4 supports safe device rebootstrap from cloud', async () => {
   assert.match(ui, /Local-only records will be preserved and uploaded/);
 });
 
-test('v1.5.4 refreshes the open app after cloud data is applied', async () => {
+test('v1.5.5 refreshes the open app after cloud data is applied', async () => {
   const [cloud, app] = await Promise.all([read('cloud-sync.js'), read('app.js')]);
   assert.match(cloud, /vantage-cloud-data-applied/);
   assert.match(app, /vantage-cloud-data-applied/);
