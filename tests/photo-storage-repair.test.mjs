@@ -5,8 +5,8 @@ import { readFile } from 'node:fs/promises';
 test('v1.3.10.6 cache-busts app and database modules', async () => {
   const index = await readFile(new URL('../index.html', import.meta.url), 'utf8');
   const app = await readFile(new URL('../app.js', import.meta.url), 'utf8');
-  assert.match(index, /app\.js\?v=1\.5\.4/);
-  assert.match(app, /db\.js\?v=1\.5\.4/);
+  assert.match(index, /app\.js\?v=1\.5\.5/);
+  assert.match(app, /db\.js\?v=1\.5\.5/);
 });
 
 test('database self-repair includes exercise media store', async () => {
