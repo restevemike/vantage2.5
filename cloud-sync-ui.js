@@ -1,6 +1,6 @@
 import {
   configureCloud, cloudConfig, cloudSession, sendMagicLink, signOutCloud,
-  syncCoreIncremental, syncMediaIncremental, syncAllIncremental, rebootstrapFromCloud, cloudSyncStatus,
+  syncCoreIncremental, syncMediaIncremental, syncAllIncremental, rebootstrapFromCloud, pullNewestVitalsFromCloud, cloudSyncStatus,
   pushCoreSnapshot, inspectCloudSnapshot, restoreCoreSnapshot
 } from './cloud-sync.js?v=1.5.4';
 
@@ -39,6 +39,7 @@ function panelHtml() {
       <div class="data-actions">
         <button id="cloudSyncCore" class="button button-success button-wide" type="button" disabled>Sync core records</button>
         <button id="cloudSyncMedia" class="button button-primary button-wide" type="button" disabled>Sync private media</button>
+        <button id="cloudPullVitals" class="button button-success button-wide" type="button" disabled>Pull newest vitals from cloud</button>
         <button id="cloudRebootstrap" class="button button-ghost button-wide" type="button" disabled>Re-bootstrap this device from cloud</button>
         <button id="cloudPushSnapshot" class="button button-ghost button-wide" type="button" disabled>Create fallback snapshot</button>
         <button id="cloudRestoreSnapshot" class="button button-ghost button-wide" type="button" disabled>Restore fallback snapshot</button>
@@ -135,6 +136,7 @@ async function refreshAuth() {
   const restore = document.querySelector('#cloudRestoreSnapshot');
   const syncCore = document.querySelector('#cloudSyncCore');
   const syncMedia = document.querySelector('#cloudSyncMedia');
+  const pullVitals = document.querySelector('#cloudPullVitals');
   const rebootstrap = document.querySelector('#cloudRebootstrap');
   const signOut = document.querySelector('#cloudSignOut');
   const badge = document.querySelector('#cloudSyncBadge');
@@ -146,6 +148,7 @@ async function refreshAuth() {
       restore.disabled = false;
       syncCore.disabled = false;
       syncMedia.disabled = false;
+      pullVitals.disabled = false;
       rebootstrap.disabled = false;
       signOut.hidden = false;
       badge.textContent = 'Cloud connected';
@@ -166,6 +169,7 @@ async function refreshAuth() {
   restore.disabled = true;
   syncCore.disabled = true;
   syncMedia.disabled = true;
+  pullVitals.disabled = true;
   rebootstrap.disabled = true;
   signOut.hidden = true;
   badge.textContent = 'Local-first';
@@ -247,6 +251,27 @@ function installPanel() {
     }
   });
 
+
+
+  document.querySelector('#cloudPullVitals')?.addEventListener('click', async () => {
+    const button = document.querySelector('#cloudPullVitals');
+    try {
+      setBusy(button, true, 'Pulling vitals…');
+      const result = await pullNewestVitalsFromCloud();
+      const summary = [
+        result.payload?.recovery != null ? `recovery ${result.payload.recovery}%` : null,
+        result.payload?.hrv != null ? `HRV ${result.payload.hrv}` : null,
+        result.payload?.restingHr != null ? `RHR ${result.payload.restingHr}` : null,
+        result.payload?.systolic ? `BP ${result.payload.systolic}/${result.payload.diastolic || '–'}` : null
+      ].filter(Boolean).join(' · ');
+      setStatus(`Vitals pulled from cloud · ${result.date}${summary ? ' · ' + summary : ''}`, 'info');
+    } catch (error) {
+      setStatus(`Vitals pull failed: ${error.message}`, 'warning');
+    } finally {
+      setBusy(button, false);
+      button.disabled = false;
+    }
+  });
 
   document.querySelector('#cloudRebootstrap')?.addEventListener('click', async () => {
     if (!confirm('Re-bootstrap this device from cloud? Matching record IDs on this device will be replaced by the cloud copy. Local-only records will be preserved and uploaded.')) return;
