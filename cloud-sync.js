@@ -65,32 +65,23 @@ export async function configureCloud({ url, key }) {
 export function cloudConfig() { return readConfig(); }
 export async function cloudSession() { await loadSupabase(); return currentSession; }
 
-export async function requestEmailOtp(email) {
+export async function sendMagicLink(email) {
   const client = await loadSupabase();
   const address = String(email || '').trim().toLowerCase();
   if (!address) throw new Error('Enter your email address.');
+  const redirect = new URL('./', window.location.href);
+  redirect.hash = '';
+  redirect.search = '';
   const { error } = await client.auth.signInWithOtp({
     email: address,
-    options: { shouldCreateUser: true }
+    options: {
+      shouldCreateUser: true,
+      emailRedirectTo: redirect.toString()
+    }
   });
   if (error) throw error;
-  return { email: address };
+  return { email: address, redirectTo: redirect.toString() };
 }
-
-export async function verifyEmailOtp(email, token) {
-  const client = await loadSupabase();
-  const address = String(email || '').trim().toLowerCase();
-  const cleanToken = String(token || '').replace(/\s+/g, '');
-  if (!address) throw new Error('Enter your email address.');
-  if (!/^\d{6,8}$/.test(cleanToken)) throw new Error('Enter the verification code from your email.');
-  const { data, error } = await client.auth.verifyOtp({ email: address, token: cleanToken, type: 'email' });
-  if (error) throw error;
-  currentSession = data.session || null;
-  return currentSession;
-}
-
-// Backward-compatible alias for any older UI code.
-export const sendMagicLink = requestEmailOtp;
 
 export async function signOutCloud() {
   const client = await loadSupabase();
