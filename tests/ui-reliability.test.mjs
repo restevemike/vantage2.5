@@ -29,7 +29,7 @@ test('touch reorder uses pointer capture and a visible placeholder', () => {
 });
 
 test('service worker cache is advanced for v1.3.10.6', () => {
-  assert.match(sw, /vantage-training-console-v15-6/);
+  assert.match(sw, /vantage-training-console-v15-7/);
 });
 
 test('LISS review captures source-separated metrics and media roles', () => {
