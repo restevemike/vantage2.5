@@ -10,6 +10,6 @@ test('v1.3.10.6 startup does not call removed recovery ticker', async () => {
 test('v1.3.10.6 cache busts the app shell', async () => {
   const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
   const sw = await readFile(new URL('../sw.js', import.meta.url), 'utf8');
-  assert.match(html, /app\.js\?v=1\.4\.4/);
-  assert.match(sw, /vantage-training-console-v14-4/);
+  assert.match(html, /app\.js\?v=1\.5\.0/);
+  assert.match(sw, /vantage-training-console-v15-0/);
 });

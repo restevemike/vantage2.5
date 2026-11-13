@@ -1,4 +1,4 @@
-const CACHE = 'vantage-training-console-v14-4';
+const CACHE = 'vantage-training-console-v15-0';
 const APP_SHELL = [
   './', './index.html', './styles.css', './app.js', './db.js', './seed.js',
   './readiness.js', './ftms-bluetooth.js', './historical-import.js', './exercise-catalogue.js', './programs.js', './workout-history.js', './strength-integrity.js', './evidence-integrity.js', './xlsx-import.js', './vitals-markdown.js', './workout-markdown.js', './nutrition-markdown.js', './liss-markdown.js', './recovery-markdown.js', './zip-pack.js',
