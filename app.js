@@ -6689,8 +6689,15 @@ function bindEvents() {
   $('#skipHydrationAndContinueButton')?.addEventListener('click', () => finishHydrationReminder('skip'));
   $('#closeHydrationReminderButton')?.addEventListener('click', () => finishHydrationReminder('cancel'));
   $('#hydrationReminderDialog')?.addEventListener('cancel', event => { event.preventDefault(); finishHydrationReminder('cancel'); });
-  $$('.bottom-nav button').forEach(button => button.addEventListener('click', () => showScreen(button.dataset.nav)));
-  $$('[data-go]').forEach(button => button.addEventListener('click', () => showScreen(button.dataset.go)));
+  $('.bottom-nav button').forEach(button => button.addEventListener('click', () => showScreen(button.dataset.nav)));
+  $('[data-go]').forEach(button => button.addEventListener('click', () => showScreen(button.dataset.go)));
+  window.addEventListener('vantage-cloud-data-applied', async event => {
+    await refreshState();
+    renderAll();
+    const detail = event.detail || {};
+    const count = Number(detail.downloaded || 0) + Number(detail.deleted || 0);
+    if (count > 0) toast(`Cloud update applied · ${count} local change${count === 1 ? '' : 's'}`);
+  });
   $('#recordRestDayButton').addEventListener('click', recordRestDay);
   $('#todayPlan').addEventListener('click', event => {
     if (event.target.closest('[data-undo-rest-day]')) removeTodayRestDay();
