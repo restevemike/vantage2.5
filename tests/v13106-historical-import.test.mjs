@@ -37,5 +37,5 @@ test('v1.3.10.6 Data screen exposes Historical Markdown import and app applies f
   assert.match(app,/File date will be used exactly; today will not be substituted/);
   assert.match(app,/historical-markdown-late-import/);
   assert.match(sw,/historical-import\.js/);
-  assert.match(sw,/vantage-training-console-v15-6/);
+  assert.match(sw,/vantage-training-console-v15-7/);
 });
