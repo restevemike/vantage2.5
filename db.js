@@ -22,6 +22,12 @@ const STORE_DEFINITIONS = {
 };
 const STORES = Object.keys(STORE_DEFINITIONS);
 
+function notifyLocalChange(storeName, operation) {
+  if (globalThis.__vantageCloudApplying) return;
+  if (typeof globalThis.dispatchEvent !== 'function' || typeof CustomEvent === 'undefined') return;
+  globalThis.dispatchEvent(new CustomEvent('vantage-db-change', { detail: { storeName, operation, at: Date.now() } }));
+}
+
 let databasePromise;
 
 function ensureSchema(database, transaction) {
@@ -137,18 +143,24 @@ export async function get(storeName, key) {
 }
 
 export async function put(storeName, value) {
-  return transact(storeName, 'readwrite', store => store.put(value));
+  const result = await transact(storeName, 'readwrite', store => store.put(value));
+  notifyLocalChange(storeName, 'put');
+  return result;
 }
 
 export async function putMany(storeName, values) {
   if (!values.length) return;
-  return transact(storeName, 'readwrite', store => {
+  const result = await transact(storeName, 'readwrite', store => {
     for (const value of values) store.put(value);
   });
+  notifyLocalChange(storeName, 'putMany');
+  return result;
 }
 
 export async function remove(storeName, key) {
-  return transact(storeName, 'readwrite', store => store.delete(key));
+  const result = await transact(storeName, 'readwrite', store => store.delete(key));
+  notifyLocalChange(storeName, 'remove');
+  return result;
 }
 
 export async function clear(storeName) {

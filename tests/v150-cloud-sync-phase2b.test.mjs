@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 
 const read = path => readFile(new URL('../' + path, import.meta.url), 'utf8');
 
-test('v1.5.0 ships Phase 2B incremental cloud sync and OTP UI', async () => {
+test('v1.5.1 ships Phase 2B incremental cloud sync and OTP UI', async () => {
   const [cloud, ui, html, sw, manifestText, pkgText] = await Promise.all([
     read('cloud-sync.js'), read('cloud-sync-ui.js'), read('index.html'),
     read('sw.js'), read('manifest.webmanifest'), read('package.json')
@@ -26,11 +26,11 @@ test('v1.5.0 ships Phase 2B incremental cloud sync and OTP UI', async () => {
   assert.match(ui, /Sync core records/);
   assert.match(ui, /Sync private media/);
 
-  assert.match(html, /v1\.5\.0/);
-  assert.match(html, /app\.js\?v=1\.5\.0/);
-  assert.match(sw, /vantage-training-console-v15-0/);
-  assert.equal(manifest.start_url, './?pwa=150');
-  assert.equal(pkg.version, '1.5.0');
+  assert.match(html, /v1\.5\.1/);
+  assert.match(html, /app\.js\?v=1\.5\.1/);
+  assert.match(sw, /vantage-training-console-v15-1/);
+  assert.equal(manifest.start_url, './?pwa=151');
+  assert.equal(pkg.version, '1.5.1');
 });
 
 test('Phase 2B keeps Phase 2A fallback snapshot restore available', async () => {

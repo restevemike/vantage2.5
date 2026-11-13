@@ -1,8 +1,8 @@
 import {
   configureCloud, cloudConfig, cloudSession, requestEmailOtp, verifyEmailOtp, signOutCloud,
-  syncCoreIncremental, syncMediaIncremental, cloudSyncStatus,
+  syncCoreIncremental, syncMediaIncremental, syncAllIncremental, cloudSyncStatus,
   pushCoreSnapshot, inspectCloudSnapshot, restoreCoreSnapshot
-} from './cloud-sync.js?v=1.5.0';
+} from './cloud-sync.js?v=1.5.1';
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
@@ -13,10 +13,10 @@ function panelHtml() {
   return `
     <section id="cloudSyncPanel" class="panel data-actions">
       <div class="panel-heading">
-        <div><p class="eyebrow">Phase 2B</p><h3>VANTAGE Cloud Sync</h3></div>
+        <div><p class="eyebrow">Phase 2C</p><h3>VANTAGE Cloud Sync</h3></div>
         <span id="cloudSyncBadge" class="source-badge">Local-first</span>
       </div>
-      <p>Incremental two-way cloud sync for VANTAGE core records plus private media backup. Local IndexedDB remains the working database.</p>
+      <p>Automatic local-first cloud sync for VANTAGE records and private media. IndexedDB remains the working database; changes sync after a short delay when online.</p>
       <details id="cloudConfigDetails">
         <summary>Cloud connection</summary>
         <div class="form-grid">
@@ -45,7 +45,7 @@ function panelHtml() {
         <button id="cloudRestoreSnapshot" class="button button-ghost button-wide" type="button" disabled>Restore fallback snapshot</button>
       </div>
       <div id="cloudSyncStatus" class="import-status" aria-live="polite"><div class="empty-state compact-empty">No cloud sync completed yet.</div></div>
-      <p class="camera-storage-note"><strong>Phase 2B:</strong> core records sync incrementally. Session, exercise and supplement images are stored in a private user-scoped Supabase bucket. Conflicting edits are reported instead of silently overwritten.</p>
+      <p class="camera-storage-note"><strong>Phase 2C:</strong> saves trigger a debounced background sync when signed in and online. Manual sync buttons remain available. Conflicting edits are reported instead of silently overwritten.</p>
     </section>`;
 }
 
@@ -63,6 +63,70 @@ function setBusy(button, busy, label) {
     button.disabled = true;
   } else {
     button.textContent = button.dataset.originalText || button.textContent;
+  }
+}
+
+const MEDIA_STORE_NAMES = new Set(['sessionMedia', 'exerciseMedia', 'supplementMedia']);
+let autoSyncTimer = null;
+let autoSyncRunning = false;
+let autoSyncQueued = false;
+let pendingCoreSync = false;
+let pendingMediaSync = false;
+
+function scheduleAutoSync(storeName = null, delayMs = 8000) {
+  if (storeName) {
+    if (MEDIA_STORE_NAMES.has(storeName)) pendingMediaSync = true;
+    else pendingCoreSync = true;
+  } else {
+    pendingCoreSync = true;
+    pendingMediaSync = true;
+  }
+  clearTimeout(autoSyncTimer);
+  autoSyncTimer = setTimeout(runAutoSync, delayMs);
+}
+
+async function runAutoSync() {
+  if (autoSyncRunning) {
+    autoSyncQueued = true;
+    return;
+  }
+  if (!navigator.onLine || document.visibilityState === 'hidden') {
+    autoSyncQueued = true;
+    return;
+  }
+  const session = await cloudSession().catch(() => null);
+  if (!session?.user) return;
+
+  autoSyncRunning = true;
+  const badge = document.querySelector('#cloudSyncBadge');
+  if (badge) badge.textContent = 'Syncing…';
+  try {
+    const results = [];
+    if (pendingCoreSync && pendingMediaSync) {
+      const result = await syncAllIncremental();
+      results.push({ label: 'core', result: result.core }, { label: 'media', result: result.media });
+    } else if (pendingCoreSync) {
+      results.push({ label: 'core', result: await syncCoreIncremental() });
+    } else if (pendingMediaSync) {
+      results.push({ label: 'media', result: await syncMediaIncremental() });
+    }
+    pendingCoreSync = false;
+    pendingMediaSync = false;
+
+    const conflicts = results.flatMap(item => item.result?.conflicts || []);
+    const uploaded = results.reduce((sum, item) => sum + Number(item.result?.uploaded || 0), 0);
+    const downloaded = results.reduce((sum, item) => sum + Number(item.result?.downloaded || 0), 0);
+    setStatus(`Auto sync complete · uploaded ${uploaded} · downloaded ${downloaded}${conflicts.length ? ` · conflicts ${conflicts.length}` : ' · no conflicts'}`, conflicts.length ? 'warning' : 'info');
+  } catch (error) {
+    autoSyncQueued = true;
+    setStatus(`Auto sync pending: ${error.message}`, 'warning');
+  } finally {
+    autoSyncRunning = false;
+    if (badge) badge.textContent = 'Cloud connected';
+    if (autoSyncQueued && navigator.onLine && document.visibilityState !== 'hidden') {
+      autoSyncQueued = false;
+      scheduleAutoSync(null, 3000);
+    }
   }
 }
 
@@ -84,6 +148,7 @@ async function refreshAuth() {
       syncMedia.disabled = false;
       signOut.hidden = false;
       badge.textContent = 'Cloud connected';
+      scheduleAutoSync(null, 1500);
       try {
         const status = await cloudSyncStatus();
         setStatus(`Cloud ready · ${status.coreRecords} core records · ${status.mediaRecords} media records`, 'info');
@@ -226,6 +291,11 @@ function installPanel() {
   });
 
   window.addEventListener('vantage-cloud-auth-change', refreshAuth);
+  window.addEventListener('vantage-db-change', event => scheduleAutoSync(event.detail?.storeName || null));
+  window.addEventListener('online', () => scheduleAutoSync(null, 1500));
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') scheduleAutoSync(null, 1500);
+  });
   refreshAuth();
 }
 
