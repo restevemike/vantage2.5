@@ -67,5 +67,5 @@ test('v1.3.10.6 app contains profile foundation, same-date vitals resolver, macr
   assert.match(html,/id="profileForm"/);
   assert.match(html,/id="administrationForm"/);
   assert.match(html,/History matching audit/);
-  assert.match(sw,/vantage-training-console-v15-3/);
+  assert.match(sw,/vantage-training-console-v15-4/);
 });
