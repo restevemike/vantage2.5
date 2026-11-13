@@ -6689,8 +6689,8 @@ function bindEvents() {
   $('#skipHydrationAndContinueButton')?.addEventListener('click', () => finishHydrationReminder('skip'));
   $('#closeHydrationReminderButton')?.addEventListener('click', () => finishHydrationReminder('cancel'));
   $('#hydrationReminderDialog')?.addEventListener('cancel', event => { event.preventDefault(); finishHydrationReminder('cancel'); });
-  $('.bottom-nav button').forEach(button => button.addEventListener('click', () => showScreen(button.dataset.nav)));
-  $('[data-go]').forEach(button => button.addEventListener('click', () => showScreen(button.dataset.go)));
+  $$('.bottom-nav button').forEach(button => button.addEventListener('click', () => showScreen(button.dataset.nav)));
+  $$('[data-go]').forEach(button => button.addEventListener('click', () => showScreen(button.dataset.go)));
   window.addEventListener('vantage-cloud-data-applied', async event => {
     await refreshState();
     renderAll();
