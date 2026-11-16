@@ -323,6 +323,8 @@ function installPanel() {
 
   window.addEventListener('vantage-cloud-auth-change', refreshAuth);
   window.addEventListener('vantage-db-change', event => scheduleAutoSync(event.detail?.storeName || null));
+  // Prioritise explicit daily vitals saves rather than waiting the usual 8-second debounce.
+  window.addEventListener('vantage-vitals-saved', () => scheduleAutoSync('vitals', 100));
   window.addEventListener('online', () => scheduleAutoSync(null, 1500));
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') scheduleAutoSync(null, 1500);
