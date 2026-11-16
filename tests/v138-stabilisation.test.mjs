@@ -78,5 +78,5 @@ test('v1.3.10.6 app shell and migration are versioned without changing PWA ident
   const manifest=JSON.parse(manifestText);
   assert.match(html,/v1\.5\.8/); assert.match(html,/app\.js\?v=1\.5\.8/); assert.match(sw,/vantage-training-console-v15-8/);
   assert.match(app,/applyV138ExerciseIdentityRepair/); assert.match(app,/mediaHashAudit/); assert.match(app,/metricsConfirmed/);
-  assert.equal(manifest.id,'./vantage-training-console-v133'); assert.equal(manifest.start_url,'./?pwa=157');
+  assert.equal(manifest.id,'./vantage-training-console-v133'); assert.equal(manifest.start_url,'./?pwa=158');
 });
