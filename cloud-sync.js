@@ -144,12 +144,37 @@ async function localCoreMap() {
   }
   return map;
 }
+/**
+ * Fetch EVERY remote row in stable order before diffing. Supabase/PostgREST
+ * commonly limits single SELECT responses to 1,000 rows, which previously
+ * made excess records look deleted and removed saved phone vitals.
+ *
+ * Never return partial results: a failed page must stop sync before any
+ * local or cloud write/delete is attempted.
+ */
+export async function fetchAllRemoteRows(client, table, userId, columns, pageSize = 500) {
+  if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 1000) throw new Error('Invalid sync page size.');
+  const maxRows = 100000;
+  const records = [];
+  for (let offset = 0; offset < maxRows; offset += pageSize) {
+    const { data, error } = await client.from(table)
+      .select(columns)
+      .eq('user_id', userId)
+      .order('store_name', { ascending: true })
+      .order('record_id', { ascending: true })
+      .range(offset, offset + pageSize - 1);
+    if (error) throw error;
+    if (!Array.isArray(data)) throw new Error('Invalid cloud response; sync stopped without applying changes.');
+    records.push(...data);
+    if (data.length < pageSize) return records;
+  }
+  throw new Error('Cloud contains more than 100,000 records; refusing partial sync.');
+}
+
 async function remoteCoreMap(client, userId) {
-  const { data, error } = await client.from('vantage_cloud_records')
-    .select('store_name,record_id,payload,fingerprint,updated_at')
-    .eq('user_id', userId);
-  if (error) throw error;
-  return new Map((data || []).map(row => [
+  const data = await fetchAllRemoteRows(client, 'vantage_cloud_records', userId,
+    'store_name,record_id,payload,fingerprint,updated_at');
+  return new Map(data.map(row => [
     compositeKey(row.store_name, row.record_id),
     { store: row.store_name, id: String(row.record_id), payload: row.payload, fingerprint: row.fingerprint, updatedAt: row.updated_at }
   ]));
@@ -290,11 +315,9 @@ async function localMediaMap() {
   return map;
 }
 async function remoteMediaMap(client, userId) {
-  const { data, error } = await client.from('vantage_cloud_media')
-    .select('store_name,record_id,payload,fingerprint,object_path,mime_type,byte_size,updated_at')
-    .eq('user_id', userId);
-  if (error) throw error;
-  return new Map((data || []).map(row => [
+  const data = await fetchAllRemoteRows(client, 'vantage_cloud_media', userId,
+    'store_name,record_id,payload,fingerprint,object_path,mime_type,byte_size,updated_at');
+  return new Map(data.map(row => [
     compositeKey(row.store_name, row.record_id),
     {
       store: row.store_name, id: String(row.record_id), payload: row.payload,
