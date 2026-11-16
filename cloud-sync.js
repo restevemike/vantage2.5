@@ -1,4 +1,4 @@
-import * as db from './db.js?v=1.5.7';
+import * as db from './db.js?v=1.5.8';
 
 const CONFIG_KEY = 'vantage-cloud-config-v1';
 const DEFAULT_CLOUD_CONFIG = {
@@ -122,6 +122,18 @@ function notifyCloudDataApplied(detail = {}) {
   globalThis.dispatchEvent(new CustomEvent('vantage-cloud-data-applied', { detail }));
 }
 
+
+/**
+ * Daily vitals use last-write comparison only during the initial no-baseline
+ * bootstrap. A tie/missing timestamps is a conflict, never silent overwrite.
+ */
+export function decideVitalsBootstrap(localPayload, remotePayload) {
+  const localAt = Date.parse(localPayload?.updatedAt || '');
+  const remoteAt = Date.parse(remotePayload?.updatedAt || '');
+  if (!Number.isFinite(localAt) || !Number.isFinite(remoteAt) || localAt === remoteAt) return 'conflict';
+  return localAt > remoteAt ? 'upload' : 'download';
+}
+
 async function localCoreMap() {
   const map = new Map();
   for (const store of CORE_STORES) {
@@ -132,12 +144,45 @@ async function localCoreMap() {
   }
   return map;
 }
+/**
+ * Fetch EVERY remote row in stable order before diffing. Supabase/PostgREST
+ * commonly limits single SELECT responses to 1,000 rows, which previously
+ * made excess records look deleted and removed saved phone vitals.
+ *
+ * Never return partial results: a failed page must stop sync before any
+ * local or cloud write/delete is attempted.
+ */
+export async function fetchAllRemoteRows(client, table, userId, columns, pageSize = 500) {
+  if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 1000) throw new Error('Invalid sync page size.');
+  const maxRows = 100000;
+  const records = [];
+  let expectedTotal = null;
+  for (let offset = 0; offset < maxRows; offset += pageSize) {
+    const { data, error, count } = await client.from(table)
+      .select(columns, { count: 'exact' })
+      .eq('user_id', userId)
+      .order('store_name', { ascending: true })
+      .order('record_id', { ascending: true })
+      .range(offset, offset + pageSize - 1);
+    if (error) throw error;
+    if (!Array.isArray(data) || !Number.isSafeInteger(count) || count < 0) {
+      throw new Error('Incomplete cloud response or missing row count; refusing destructive sync.');
+    }
+    if (expectedTotal === null) expectedTotal = count;
+    if (count !== expectedTotal) throw new Error('Cloud row count changed during sync; retry after other devices finish syncing.');
+    records.push(...data);
+    if (records.length === expectedTotal) return records;
+    if (data.length < pageSize || records.length > expectedTotal) {
+      throw new Error('Cloud response omitted records; refusing local or remote changes.');
+    }
+  }
+  throw new Error('Cloud contains more than 100,000 records; refusing partial sync.');
+}
+
 async function remoteCoreMap(client, userId) {
-  const { data, error } = await client.from('vantage_cloud_records')
-    .select('store_name,record_id,payload,fingerprint,updated_at')
-    .eq('user_id', userId);
-  if (error) throw error;
-  return new Map((data || []).map(row => [
+  const data = await fetchAllRemoteRows(client, 'vantage_cloud_records', userId,
+    'store_name,record_id,payload,fingerprint,updated_at');
+  return new Map(data.map(row => [
     compositeKey(row.store_name, row.record_id),
     { store: row.store_name, id: String(row.record_id), payload: row.payload, fingerprint: row.fingerprint, updatedAt: row.updated_at }
   ]));
@@ -169,7 +214,12 @@ export async function syncCoreIncremental() {
       if (lf && !rf) uploads.push(l);
       else if (!lf && rf) localWrites.push(r);
       else if (lf && rf && lf !== rf) {
-        if (bootstrap) localWrites.push(r);
+        if (l.store === 'vitals') {
+          const decision = decideVitalsBootstrap(l.payload, r.payload);
+          if (decision === 'upload') uploads.push(l);
+          else if (decision === 'download') localWrites.push(r);
+          else conflicts.push(key);
+        } else if (bootstrap) localWrites.push(r);
         else conflicts.push(key);
       }
       if (lf === rf && lf) nextBaseline[key] = lf;
@@ -181,11 +231,17 @@ export async function syncCoreIncremental() {
     if (!localChanged && !remoteChanged) { nextBaseline[key] = base; continue; }
 
     if (localChanged && !remoteChanged) {
-      if (l) uploads.push(l); else remoteDeletes.push(r);
+      // Missing local vitals may mean Android/browser eviction, not user deletion.
+      if (l) uploads.push(l);
+      else if (r?.store === 'vitals') localWrites.push(r);
+      else remoteDeletes.push(r);
       continue;
     }
     if (!localChanged && remoteChanged) {
-      if (r) localWrites.push(r); else localDeletes.push(l);
+      // Preserve daily vitals even if a remote copy vanished unexpectedly.
+      if (r) localWrites.push(r);
+      else if (l?.store === 'vitals') uploads.push(l);
+      else localDeletes.push(l);
       continue;
     }
     if (lf === rf) {
@@ -267,11 +323,9 @@ async function localMediaMap() {
   return map;
 }
 async function remoteMediaMap(client, userId) {
-  const { data, error } = await client.from('vantage_cloud_media')
-    .select('store_name,record_id,payload,fingerprint,object_path,mime_type,byte_size,updated_at')
-    .eq('user_id', userId);
-  if (error) throw error;
-  return new Map((data || []).map(row => [
+  const data = await fetchAllRemoteRows(client, 'vantage_cloud_media', userId,
+    'store_name,record_id,payload,fingerprint,object_path,mime_type,byte_size,updated_at');
+  return new Map(data.map(row => [
     compositeKey(row.store_name, row.record_id),
     {
       store: row.store_name, id: String(row.record_id), payload: row.payload,
@@ -398,6 +452,15 @@ export async function pullNewestVitalsFromCloud() {
     .sort((a, b) => String(b.payload.date).localeCompare(String(a.payload.date)) || String(b.updated_at || '').localeCompare(String(a.updated_at || '')));
   const newest = rows[0];
   if (!newest?.payload) throw new Error('No cloud vitals record was found.');
+  const phoneCopy = await db.get('vitals', newest.record_id);
+  if (phoneCopy) {
+    const localFingerprint = await rowFingerprint(phoneCopy);
+    const cloudFingerprint = newest.fingerprint || await rowFingerprint(newest.payload);
+    if (localFingerprint !== cloudFingerprint &&
+        decideVitalsBootstrap(phoneCopy, newest.payload) !== 'download') {
+      throw new Error('This phone has different/newer local vitals than the cloud. Export a backup and sync core records before pulling; cloud pull will not overwrite uncertain local data.');
+    }
+  }
 
   globalThis.__vantageCloudApplying = true;
   try {

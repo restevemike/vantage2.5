@@ -1,25 +1,27 @@
-import * as db from './db.js?v=1.5.7';
-import { templates, exerciseLibrary, sampleVitals, sampleSessions, sampleMeals } from './seed.js?v=1.5.7';
-import { parseVantageWorkbook, nameKey, stableId } from './xlsx-import.js?v=1.5.7';
-import { calculateReadiness } from './readiness.js?v=1.5.7';
-import { parseVitalsMarkdown, applyVitalsToForm, VITALS_FILE_PROMPT, createVitalsMarkdownExample } from './vitals-markdown.js?v=1.5.7';
-import { createWorkoutMarkdown, workoutMarkdownFilename } from './workout-markdown.js?v=1.5.7';
-import { parseNutritionMarkdown, createNutritionMarkdown, nutritionMarkdownFilename, MACRO_FILE_PROMPT } from './nutrition-markdown.js?v=1.5.7';
-import { createLissMarkdown, lissMarkdownFilename, parseLissAnalysisMarkdown, cleanSources, sourcesToLegacyMetrics, legacyMetricsToSources, compareLissSources, classifyLissSession, sanitiseLissAnalysisEvidence } from './liss-markdown.js?v=1.5.7';
-import { createZip, sha256Hex } from './zip-pack.js?v=1.5.7';
-import { parseBloodworkMarkdown, parseBloodworkAnalysisMarkdown, createBloodworkMarkdown, createBloodworkAnalysisMarkdown, createBloodworkAnalysisRequest, bloodworkMarkdownFilename, bloodworkAnalysisFilename, markerHistory, markerNameKey } from './bloodwork-markdown.js?v=1.5.7';
-import { metricsOverview, exerciseNames, exerciseProgress as buildExerciseProgress, muscleDistribution, weeklyTrainingLoad, nutritionWeightSummary, bodyMeasurementSeries, wearableSummary, readinessAlignment, relativeStrength, flattenStrengthSets, nutritionPerformanceAnalysis, nutritionSessionPerformanceAnalysis, strengthSessionFamilies, cycleWeekNumber, cyclePerformanceSummary, supplementPerformanceComparison, supplementStateOnDate } from './metrics-engine.js?v=1.5.7';
-import { parseStrengthAnalysisMarkdown, strengthAnalysisTemplate } from './strength-analysis.js?v=1.5.7';
-import { runExperimentalOcr, parseFitnessSummaryText, ocrResultRows } from './ocr-engine.js?v=1.5.7';
-import { createRecoveryMarkdown, recoveryMarkdownFilename, recoveryAnalysisTemplate } from './recovery-markdown.js?v=1.5.7';
-import { findBestPreviousStrengthSession, matchExerciseFromSession, canonicalExerciseIdentity, exerciseCompatibility, historyAuditForExercise } from './workout-history.js?v=1.5.7';
-import { duplicateSourceExerciseIds, strengthIdentityBlockingIssues, inferMachineBrand, inferMachineModel, inferMovementPattern } from './strength-integrity.js?v=1.5.7';
-import { mediaHashAudit, roleContentValidation, ocrValidationState, ocrMediaAuthoritative } from './evidence-integrity.js?v=1.5.7';
-import { detectHistoricalMarkdown } from './historical-import.js?v=1.5.7';
-import { builtInExerciseLibrary, exerciseCatalogueSummary } from './exercise-catalogue.js?v=1.5.7';
-import { DEFAULT_FEATURE_FLAGS, PROGRAM_PRESETS, HDM_EXTENDED_META, HDM_EXTENDED_SCHEDULE, hdmTransitionGate, normaliseFeatureFlags, activeProgram, nextProgramSlot, advanceProgramProgress, programPresetById } from './programs.js?v=1.5.7';
+import * as db from './db.js?v=1.5.8';
+import { templates, exerciseLibrary, sampleVitals, sampleSessions, sampleMeals } from './seed.js?v=1.5.8';
+import { parseVantageWorkbook, nameKey, stableId } from './xlsx-import.js?v=1.5.8';
+import { calculateReadiness } from './readiness.js?v=1.5.8';
+import { parseVitalsMarkdown, applyVitalsToForm, VITALS_FILE_PROMPT, createVitalsMarkdownExample } from './vitals-markdown.js?v=1.5.8';
+import { createWorkoutMarkdown, workoutMarkdownFilename } from './workout-markdown.js?v=1.5.8';
+import { parseNutritionMarkdown, createNutritionMarkdown, nutritionMarkdownFilename, MACRO_FILE_PROMPT } from './nutrition-markdown.js?v=1.5.8';
+import { createLissMarkdown, lissMarkdownFilename, parseLissAnalysisMarkdown, cleanSources, sourcesToLegacyMetrics, legacyMetricsToSources, compareLissSources, classifyLissSession, sanitiseLissAnalysisEvidence } from './liss-markdown.js?v=1.5.8';
+import { createZip, sha256Hex } from './zip-pack.js?v=1.5.8';
+import { parseBloodworkMarkdown, parseBloodworkAnalysisMarkdown, createBloodworkMarkdown, createBloodworkAnalysisMarkdown, createBloodworkAnalysisRequest, bloodworkMarkdownFilename, bloodworkAnalysisFilename, markerHistory, markerNameKey } from './bloodwork-markdown.js?v=1.5.8';
+import { metricsOverview, exerciseNames, exerciseProgress as buildExerciseProgress, muscleDistribution, weeklyTrainingLoad, nutritionWeightSummary, bodyMeasurementSeries, wearableSummary, readinessAlignment, relativeStrength, flattenStrengthSets, nutritionPerformanceAnalysis, nutritionSessionPerformanceAnalysis, strengthSessionFamilies, cycleWeekNumber, cyclePerformanceSummary, supplementPerformanceComparison, supplementStateOnDate } from './metrics-engine.js?v=1.5.8';
+import { parseStrengthAnalysisMarkdown, strengthAnalysisTemplate } from './strength-analysis.js?v=1.5.8';
+import { runExperimentalOcr, parseFitnessSummaryText, ocrResultRows } from './ocr-engine.js?v=1.5.8';
+import { createRecoveryMarkdown, recoveryMarkdownFilename, recoveryAnalysisTemplate } from './recovery-markdown.js?v=1.5.8';
+import { findBestPreviousStrengthSession, matchExerciseFromSession, canonicalExerciseIdentity, exerciseCompatibility, historyAuditForExercise } from './workout-history.js?v=1.5.8';
+import { duplicateSourceExerciseIds, strengthIdentityBlockingIssues, inferMachineBrand, inferMachineModel, inferMovementPattern } from './strength-integrity.js?v=1.5.8';
+import { mediaHashAudit, roleContentValidation, ocrValidationState, ocrMediaAuthoritative } from './evidence-integrity.js?v=1.5.8';
+import { detectHistoricalMarkdown } from './historical-import.js?v=1.5.8';
+import { builtInExerciseLibrary, exerciseCatalogueSummary } from './exercise-catalogue.js?v=1.5.8';
+import { DEFAULT_FEATURE_FLAGS, PROGRAM_PRESETS, HDM_EXTENDED_META, HDM_EXTENDED_SCHEDULE, hdmTransitionGate, normaliseFeatureFlags, activeProgram, nextProgramSlot, advanceProgramProgress, programPresetById } from './programs.js?v=1.5.8';
 
-const APP_VERSION = '1.5.7';
+const APP_VERSION = '1.5.8';
+let vitalsFormDirty = false;
+let loadedVitalsDate = null;
 // v1.3.10.6 hotfix: removed stale FTMS renderer calls after FTMS UI was removed from normal LISS.
 let replaceExerciseTargetId = null;
 const DRAFT_KEY = 'vantage-current-session';
@@ -487,7 +489,7 @@ async function buildWorkoutCoachPack(session) {
     { name: workoutMarkdownFilename(session), data: markdown },
     { name: 'manifest.json', data: JSON.stringify(manifest, null, 2) },
     { name: 'VANTAGE_Strength_Analysis_Template.md', data: strengthAnalysisTemplate(session) },
-    { name: 'VANTAGE_STRENGTH_COACH_PROMPT.md', data: await (await fetch('./VANTAGE_STRENGTH_COACH_PROMPT.md?v=1.5.7')).text() },
+    { name: 'VANTAGE_STRENGTH_COACH_PROMPT.md', data: await (await fetch('./VANTAGE_STRENGTH_COACH_PROMPT.md?v=1.5.8')).text() },
     ...exportMedia.map(item => ({ name: item.archivePath, data: item.blob }))
   ];
   return {
@@ -560,7 +562,7 @@ async function buildRecoveryCoachPack(session) {
     { name: recoveryMarkdownFilename(session), data: markdown },
     { name: 'manifest.json', data: JSON.stringify(manifest, null, 2) },
     { name: 'VANTAGE_Recovery_Analysis_Template.md', data: recoveryAnalysisTemplate(session) },
-    { name: 'VANTAGE_RECOVERY_COACH_PROMPT.md', data: await (await fetch('./VANTAGE_RECOVERY_COACH_PROMPT.md?v=1.5.7')).text() },
+    { name: 'VANTAGE_RECOVERY_COACH_PROMPT.md', data: await (await fetch('./VANTAGE_RECOVERY_COACH_PROMPT.md?v=1.5.8')).text() },
     ...exportMedia.map(item => ({ name: item.archivePath, data: item.blob }))
   ];
   return { blob: await createZip(entries), filename: recoveryCoachPackFilename(session), markdown, manifest, media: preparedMedia };
@@ -5607,7 +5609,8 @@ function renderAll() {
 }
 
 function showScreen(screen) {
-  $$('.screen').forEach(node => node.classList.toggle('active', node.dataset.screen === screen));
+  if (screen === 'vitals' && !vitalsFormDirty) loadSavedVitalsIntoForm();
+  $('.screen').forEach(node => node.classList.toggle('active', node.dataset.screen === screen));
   let activeNav = null;
   $$('.bottom-nav button').forEach(node => {
     const active = node.dataset.nav === screen;
@@ -5616,6 +5619,19 @@ function showScreen(screen) {
   });
   activeNav?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+
+/** Populate Vitals from IndexedDB-backed application state; never discard unsaved edits. */
+function loadSavedVitalsIntoForm(dateValue = null) {
+  const form = $('#vitalsForm');
+  if (!form) return false;
+  const date = dateValue || form.elements.date?.value || today();
+  const saved = state.vitals.find(item => item.date === date) || null;
+  applyVitalsToForm(form, saved || { date }, date);
+  loadedVitalsDate = date;
+  updateVitalsPreview();
+  return Boolean(saved);
 }
 
 function formToVitals(form) {
@@ -6694,6 +6710,7 @@ function bindEvents() {
   window.addEventListener('vantage-cloud-data-applied', async event => {
     await refreshState();
     renderAll();
+    if (!vitalsFormDirty) loadSavedVitalsIntoForm();
     const detail = event.detail || {};
     const count = Number(detail.downloaded || 0) + Number(detail.deleted || 0);
     if (count > 0) toast(`Cloud update applied · ${count} local change${count === 1 ? '' : 's'}`);
@@ -7020,13 +7037,40 @@ function bindEvents() {
 
   const vitalsForm = $('#vitalsForm');
   vitalsForm.elements.date.value = today();
-  vitalsForm.addEventListener('input', updateVitalsPreview);
+  loadSavedVitalsIntoForm(today());
+  vitalsForm.addEventListener('input', event => {
+    if (event.target?.name !== 'date') vitalsFormDirty = true;
+    updateVitalsPreview();
+  });
+  vitalsForm.elements.date.addEventListener('change', event => {
+    const selectedDate = event.target.value;
+    if (!selectedDate || selectedDate === loadedVitalsDate) return;
+    if (vitalsFormDirty && !window.confirm('Discard unsaved vitals changes and load the selected date?')) {
+      vitalsForm.elements.date.value = loadedVitalsDate || today();
+      updateVitalsPreview();
+      return;
+    }
+    vitalsFormDirty = false;
+    state.pendingVitalsImport = null;
+    loadSavedVitalsIntoForm(selectedDate);
+  });
   vitalsForm.addEventListener('submit', async event => {
     event.preventDefault();
     const vitals = mergeVitalsForSave(formToVitals(vitalsForm));
     await db.put('vitals', vitals);
+    const readback = await db.get('vitals', vitals.id);
+    if (!readback || readback.date !== vitals.date || readback.updatedAt !== vitals.updatedAt) {
+      throw new Error('Vitals did not verify after the local save. Do not clear site data; export a backup.');
+    }
     state.pendingVitalsImport = null;
-    await refreshState(); renderAll(); showScreen('dashboard'); toast('Vitals saved');
+    await refreshState();
+    if (!state.vitals.some(item => item.id === vitals.id)) throw new Error('Saved vitals are missing from the refreshed view.');
+    vitalsFormDirty = false;
+    loadSavedVitalsIntoForm(vitals.date);
+    renderAll();
+    showScreen('dashboard');
+    window.dispatchEvent(new CustomEvent('vantage-vitals-saved', { detail: { date: vitals.date, id: vitals.id } }));
+    toast('Vitals saved and verified locally · cloud sync requested');
   });
 
   $('#vitalsMarkdownInput').addEventListener('change', async event => {
@@ -7041,6 +7085,8 @@ function bindEvents() {
         sourceFormat: result.sourceFormat, importedFields: [...(result.importedFields || [])], fileName: file.name
       };
       applyVitalsToForm(vitalsForm, result.values, today());
+      loadedVitalsDate = today();
+      vitalsFormDirty = true;
       updateVitalsPreview();
       renderVitalsMarkdownStatus(result, file.name);
       vitalsForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -7208,7 +7254,7 @@ function bindEvents() {
   });
   $('#copyBloodworkPromptButton').addEventListener('click', async () => {
     try {
-      const response = await fetch('./VANTAGE_BLOODWORK_THREAD_PROMPT.md?v=1.5.7');
+      const response = await fetch('./VANTAGE_BLOODWORK_THREAD_PROMPT.md?v=1.5.8');
       if (!response.ok) throw new Error('Prompt file unavailable');
       await copyText(await response.text());
       toast('Bloodwork Analyzer prompt copied');
@@ -7358,11 +7404,11 @@ async function init() {
   if (storedMetricsProfile?.value) { state.metricsProfile = storedMetricsProfile.value; localStorage.setItem('vantage-metrics-profile', JSON.stringify(state.metricsProfile)); }
   loadDraft(); bindEvents();
   state.activeLocalDate = today();
-  renderAll(); updateVitalsPreview();
+  renderAll(); loadSavedVitalsIntoForm(today());
   setInterval(checkForLocalDayChange, 60000);
   window.addEventListener('focus', checkForLocalDayChange);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) checkForLocalDayChange(); });
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=1.5.7').catch(console.error);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=1.5.8').catch(console.error);
 }
 
 init().catch(error => {
