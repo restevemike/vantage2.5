@@ -37,9 +37,12 @@ test('v1.5.8 cloud sync protects vitals against implicit deletion and stale pull
 });
 
 test('v1.5.8 updates frontend, service worker and app version together', async () => {
-  const [app, html, sw, pkg] = await Promise.all([
-    read('app.js'),read('index.html'),read('sw.js'),read('package.json'),
+  const [app, html, sw, pkg, manifestSource] = await Promise.all([
+    read('app.js'),read('index.html'),read('sw.js'),read('package.json'),read('manifest.webmanifest'),
   ]);
+  const manifest = JSON.parse(manifestSource);
+  assert.equal(manifest.start_url, './?pwa=158');
+  assert.equal(manifest.id, './vantage-training-console-v133');
   assert.match(app,/APP_VERSION = '1\.5\.8'/);
   assert.match(html,/v1\.5\.8/);
   assert.match(sw,/vantage-training-console-v15-8/);
