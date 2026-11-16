@@ -122,6 +122,18 @@ function notifyCloudDataApplied(detail = {}) {
   globalThis.dispatchEvent(new CustomEvent('vantage-cloud-data-applied', { detail }));
 }
 
+
+/**
+ * Daily vitals use last-write comparison only during the initial no-baseline
+ * bootstrap. A tie/missing timestamps is a conflict, never silent overwrite.
+ */
+export function decideVitalsBootstrap(localPayload, remotePayload) {
+  const localAt = Date.parse(localPayload?.updatedAt || '');
+  const remoteAt = Date.parse(remotePayload?.updatedAt || '');
+  if (!Number.isFinite(localAt) || !Number.isFinite(remoteAt) || localAt === remoteAt) return 'conflict';
+  return localAt > remoteAt ? 'upload' : 'download';
+}
+
 async function localCoreMap() {
   const map = new Map();
   for (const store of CORE_STORES) {
@@ -169,7 +181,12 @@ export async function syncCoreIncremental() {
       if (lf && !rf) uploads.push(l);
       else if (!lf && rf) localWrites.push(r);
       else if (lf && rf && lf !== rf) {
-        if (bootstrap) localWrites.push(r);
+        if (l.store === 'vitals') {
+          const decision = decideVitalsBootstrap(l.payload, r.payload);
+          if (decision === 'upload') uploads.push(l);
+          else if (decision === 'download') localWrites.push(r);
+          else conflicts.push(key);
+        } else if (bootstrap) localWrites.push(r);
         else conflicts.push(key);
       }
       if (lf === rf && lf) nextBaseline[key] = lf;
@@ -181,11 +198,17 @@ export async function syncCoreIncremental() {
     if (!localChanged && !remoteChanged) { nextBaseline[key] = base; continue; }
 
     if (localChanged && !remoteChanged) {
-      if (l) uploads.push(l); else remoteDeletes.push(r);
+      // Missing local vitals may mean Android/browser eviction, not user deletion.
+      if (l) uploads.push(l);
+      else if (r?.store === 'vitals') localWrites.push(r);
+      else remoteDeletes.push(r);
       continue;
     }
     if (!localChanged && remoteChanged) {
-      if (r) localWrites.push(r); else localDeletes.push(l);
+      // Preserve daily vitals even if a remote copy vanished unexpectedly.
+      if (r) localWrites.push(r);
+      else if (l?.store === 'vitals') uploads.push(l);
+      else localDeletes.push(l);
       continue;
     }
     if (lf === rf) {
@@ -398,6 +421,15 @@ export async function pullNewestVitalsFromCloud() {
     .sort((a, b) => String(b.payload.date).localeCompare(String(a.payload.date)) || String(b.updated_at || '').localeCompare(String(a.updated_at || '')));
   const newest = rows[0];
   if (!newest?.payload) throw new Error('No cloud vitals record was found.');
+  const phoneCopy = await db.get('vitals', newest.record_id);
+  if (phoneCopy) {
+    const localFingerprint = await rowFingerprint(phoneCopy);
+    const cloudFingerprint = newest.fingerprint || await rowFingerprint(newest.payload);
+    if (localFingerprint !== cloudFingerprint &&
+        decideVitalsBootstrap(phoneCopy, newest.payload) === 'upload') {
+      throw new Error('This phone has newer unsynced vitals than the cloud. Export a backup and sync core records first; cloud pull will not overwrite them.');
+    }
+  }
 
   globalThis.__vantageCloudApplying = true;
   try {
