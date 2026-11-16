@@ -29,7 +29,7 @@ test('v1.5.8 ships incremental cloud sync with explicit magic-link redirect', as
   assert.match(html, /v1\.5\.8/);
   assert.match(html, /app\.js\?v=1\.5\.8/);
   assert.match(sw, /vantage-training-console-v15-8/);
-  assert.equal(manifest.start_url, './?pwa=157');
+  assert.equal(manifest.start_url, './?pwa=158');
   assert.equal(pkg.version, '1.5.8');
 });
 
