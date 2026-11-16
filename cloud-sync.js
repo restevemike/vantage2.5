@@ -156,17 +156,25 @@ export async function fetchAllRemoteRows(client, table, userId, columns, pageSiz
   if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 1000) throw new Error('Invalid sync page size.');
   const maxRows = 100000;
   const records = [];
+  let expectedTotal = null;
   for (let offset = 0; offset < maxRows; offset += pageSize) {
-    const { data, error } = await client.from(table)
-      .select(columns)
+    const { data, error, count } = await client.from(table)
+      .select(columns, { count: 'exact' })
       .eq('user_id', userId)
       .order('store_name', { ascending: true })
       .order('record_id', { ascending: true })
       .range(offset, offset + pageSize - 1);
     if (error) throw error;
-    if (!Array.isArray(data)) throw new Error('Invalid cloud response; sync stopped without applying changes.');
+    if (!Array.isArray(data) || !Number.isSafeInteger(count) || count < 0) {
+      throw new Error('Incomplete cloud response or missing row count; refusing destructive sync.');
+    }
+    if (expectedTotal === null) expectedTotal = count;
+    if (count !== expectedTotal) throw new Error('Cloud row count changed during sync; retry after other devices finish syncing.');
     records.push(...data);
-    if (data.length < pageSize) return records;
+    if (records.length === expectedTotal) return records;
+    if (data.length < pageSize || records.length > expectedTotal) {
+      throw new Error('Cloud response omitted records; refusing local or remote changes.');
+    }
   }
   throw new Error('Cloud contains more than 100,000 records; refusing partial sync.');
 }
