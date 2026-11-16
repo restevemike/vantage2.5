@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fetchAllRemoteRows } from '../cloud-sync.js';
 
-function fakeCloud(rows,{errorAtPage=null}={}){
+function fakeCloud(rows,{errorAtPage=null,serverLimit=null}={}){
   const ranges=[];
   const orders=[];
   const sorted=[...rows].sort((a,b)=>
@@ -12,13 +12,13 @@ function fakeCloud(rows,{errorAtPage=null}={}){
     from(table){
       assert.ok(['vantage_cloud_records','vantage_cloud_media'].includes(table));
       return {
-        select(columns){assert.match(columns,/store_name,record_id/);return this;},
+        select(columns,options){assert.match(columns,/store_name,record_id/);assert.equal(options?.count,"exact");return this;},
         eq(column,value){assert.equal(column,'user_id');assert.equal(value,'test-user');return this;},
         order(field,opts){orders.push(field);assert.equal(opts.ascending,true);return this;},
         async range(from,to){
           ranges.push([from,to]);
-          if(from===errorAtPage)return {data:null,error:new Error('page-fetch-failed')};
-          return {data:sorted.slice(from,to+1),error:null};
+          if(from===errorAtPage)return {data:null,error:new Error('page-fetch-failed'),count:sorted.length};
+          return {data:sorted.slice(from,to+1).slice(0,serverLimit??1000),error:null,count:sorted.length};
         },
       };
     },
@@ -50,6 +50,15 @@ test('v1.5.8 aborts on a failed middle page instead of returning a truncated clo
     /page-fetch-failed/
   );
   assert.deepEqual(ranges,[[0,499],[500,999]]);
+});
+test('v1.5.8 refuses to sync when the server silently returns fewer rows than its exact count',async()=>{
+  const rows=Array.from({length:150},(_,i)=>({store_name:'vitals',record_id:String(i).padStart(4,'0')}));
+  const {client,ranges}=fakeCloud(rows,{serverLimit:100});
+  await assert.rejects(
+    ()=>fetchAllRemoteRows(client,'vantage_cloud_records','test-user','store_name,record_id',500),
+    /Cloud response omitted records/
+  );
+  assert.deepEqual(ranges,[[0,499]]);
 });
 test('v1.5.8 rejects invalid oversized sync page sizes',async()=>{
   const {client}=fakeCloud([]);
