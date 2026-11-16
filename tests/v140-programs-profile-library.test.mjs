@@ -34,7 +34,7 @@ test('v1.4.0 database adds profile-scoped programs without changing PWA identity
   assert.match(db,/schemaVersion: 12/);
   const manifest=JSON.parse(manifestText); const pkg=JSON.parse(pkgText);
   assert.equal(manifest.id,'./vantage-training-console-v133');
-  assert.equal(manifest.start_url,'./?pwa=157');
+  assert.equal(manifest.start_url,'./?pwa=158');
   assert.equal(pkg.version,'1.5.8');
 });
 
