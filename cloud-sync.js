@@ -426,8 +426,8 @@ export async function pullNewestVitalsFromCloud() {
     const localFingerprint = await rowFingerprint(phoneCopy);
     const cloudFingerprint = newest.fingerprint || await rowFingerprint(newest.payload);
     if (localFingerprint !== cloudFingerprint &&
-        decideVitalsBootstrap(phoneCopy, newest.payload) === 'upload') {
-      throw new Error('This phone has newer unsynced vitals than the cloud. Export a backup and sync core records first; cloud pull will not overwrite them.');
+        decideVitalsBootstrap(phoneCopy, newest.payload) !== 'download') {
+      throw new Error('This phone has different/newer local vitals than the cloud. Export a backup and sync core records before pulling; cloud pull will not overwrite uncertain local data.');
     }
   }
 
