@@ -5610,7 +5610,7 @@ function renderAll() {
 
 function showScreen(screen) {
   if (screen === 'vitals' && !vitalsFormDirty) loadSavedVitalsIntoForm();
-  $('.screen').forEach(node => node.classList.toggle('active', node.dataset.screen === screen));
+  $$('.screen').forEach(node => node.classList.toggle('active', node.dataset.screen === screen));
   let activeNav = null;
   $$('.bottom-nav button').forEach(node => {
     const active = node.dataset.nav === screen;
