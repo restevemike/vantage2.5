@@ -17,7 +17,7 @@
       <img class="brand-mark-image" src="icons/vantage-app-icon-dark.svg" alt="" aria-hidden="true">
       <div>
         <h1>Vantage</h1>
-        <p>Training Console <span class="version-badge">v1.6.2</span></p>
+        <p>Training Console <span class="version-badge">v1.6.3</span></p>
       </div>
     </div>
     <button id="installButton" class="button button-ghost button-small" hidden>Install</button>
@@ -32,6 +32,25 @@
         </div>
         <button class="button button-primary" data-go="vitals">Log vitals</button>
       </div>
+
+
+      <section id="flowPanel" class="panel flow-panel" aria-label="Flow daily health and training overview">
+        <div class="panel-heading">
+          <div><p class="eyebrow">Daily signals · VANTAGE</p><h3>Flow</h3></div>
+          <div class="panel-actions">
+            <button id="flowRefresh" type="button" class="button button-ghost button-small">Refresh</button>
+            <button type="button" class="button button-ghost button-small" data-go="vitals">Add scales / BP</button>
+          </div>
+        </div>
+        <p id="flowStatus" class="medical-note" role="status">Loading confirmed vitals and NOOP readings…</p>
+        <div id="flowTiles" class="flow-tile-grid" aria-label="Health metric cards"></div>
+        <div id="flowAdvice" class="flow-advice flow-advice-neutral">
+          <strong>Checking your daily signals</strong>
+          <p>Flow uses the existing VANTAGE readiness rules, with manual vitals and separately labelled NOOP snapshots.</p>
+        </div>
+        <p id="flowSource" class="medical-note">Your original readings are not overwritten.</p>
+        <p id="flowWeightTrend" class="medical-note">Weight trend requires dated entries.</p>
+      </section>
 
       <article id="readinessCard" class="readiness-card readiness-neutral">
         <div class="readiness-orb" id="readinessOrb">–</div>
@@ -574,6 +593,29 @@
           <button id="downloadVitalsExampleButton" class="button button-ghost button-wide" type="button">Download example file</button>
         </div>
         <div id="vitalsMarkdownStatus" class="import-status" aria-live="polite"><div class="empty-state">No Markdown file selected.</div></div>
+      </section>
+
+
+      <section id="flowVitalsOcr" class="panel flow-ocr-panel">
+        <div class="panel-heading"><div><p class="eyebrow">Local OCR · optional</p><h3>Scales &amp; blood-pressure screenshots</h3></div></div>
+        <p>Read a screen photo or screenshot on this phone. The suggested numbers are <strong>not saved</strong> until you check them, apply them to the existing vitals form, and press Save vitals. Confirm the date, units and cuff values.</p>
+        <div class="form-grid">
+          <label>Screenshot type
+            <select id="flowOcrKind"><option value="scales">Body-weight scales</option><option value="bp">Blood-pressure monitor</option></select>
+          </label>
+          <label>Choose screenshot
+            <input id="flowOcrInput" type="file" accept="image/*,.jpg,.jpeg,.png,.webp" aria-label="Select a scales or blood-pressure screenshot">
+          </label>
+        </div>
+        <img id="flowOcrPreview" class="flow-ocr-preview" alt="Selected screen photo for review" hidden>
+        <div class="data-actions">
+          <button id="flowOcrRun" class="button button-ghost button-wide" type="button">Read screenshot with OCR</button>
+          <button id="flowOcrApply" class="button button-primary button-wide" type="button" disabled>Apply reviewed values to vitals form</button>
+        </div>
+        <div id="flowOcrStatus" class="import-status" role="status">No screenshot selected.</div>
+        <div id="flowOcrReview" class="form-grid flow-ocr-review" hidden></div>
+        <details><summary>View recognised text for verification</summary><pre id="flowOcrRaw" class="flow-ocr-raw">No OCR text yet.</pre></details>
+        <p class="medical-note">OCR runs in your browser using the existing engine. Images are not uploaded by Flow. Keep BP cuff pulse separate from resting heart rate. OCR is not a medical measurement.</p>
       </section>
 
       <form id="vitalsForm" class="panel form-grid">
@@ -1552,6 +1594,7 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script type="module" src="app.js?v=1.6.1"></script>\n  <script type="module" src="cloud-sync-ui.js?v=1.6.1-cloud2"></script>
-  <script type="module" src="noop-integration-ui.js?v=1.6.2"></script>
+  <script type="module" src="noop-integration-ui.js?v=1.6.3"></script>
+  <script type="module" src="flow-dashboard.js?v=1.6.3"></script>
 </body>
 </html>
