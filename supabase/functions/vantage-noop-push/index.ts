@@ -141,7 +141,7 @@ Deno.serve(async(request:Request)=>{
  }
  if(!body.endsWith("\n")||body.startsWith("\uFEFF")||body.includes("\r"))return fail(400,"invalid_ndjson");
  const lines=body.slice(0,-1).split("\n");
- if(lines.length<2||lines.length>5001||lines.some(s=>s.length===0))return fail(400,"invalid_ndjson");
+ if(lines.length<1||lines.length>5001||lines.some(s=>s.length===0))return fail(400,"invalid_ndjson");
  let packet:unknown[];
  try{packet=lines.map(line=>JSON.parse(line))}catch{return fail(400,"malformed_json")}
  const [h,...rows]=packet;
