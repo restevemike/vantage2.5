@@ -6,10 +6,10 @@
   <meta name="theme-color" content="#101820">
   <meta name="description" content="VANTAGE Training Console — a local-first workout, readiness, meal and vitals tracker.">
   <title>Vantage Training Console</title>
-  <link rel="manifest" href="manifest.webmanifest?v=1.6.0">
+  <link rel="manifest" href="manifest.webmanifest?v=1.6.1">
   <link rel="icon" href="icons/vantage-favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/vantage-icon-192-v133.png">
-  <link rel="stylesheet" href="styles.css?v=1.6.0">
+  <link rel="stylesheet" href="styles.css?v=1.6.1">
 </head>
 <body>
   <header class="app-header">
@@ -17,7 +17,7 @@
       <img class="brand-mark-image" src="icons/vantage-app-icon-dark.svg" alt="" aria-hidden="true">
       <div>
         <h1>Vantage</h1>
-        <p>Training Console <span class="version-badge">v1.6.0</span></p>
+        <p>Training Console <span class="version-badge">v1.6.1</span></p>
       </div>
     </div>
     <button id="installButton" class="button button-ghost button-small" hidden>Install</button>
@@ -45,11 +45,11 @@
       <div id="bpAlert" class="alert alert-warning" hidden></div>
 
       <div class="metric-grid" id="dashboardMetrics"></div>
-      <section id="noopHomeCard" class="panel" hidden>
+      <section id="noopHomeCard" class="panel">
         <div class="panel-heading"><div><p class="eyebrow">NOOP companion</p><h3>Latest imported biometrics</h3></div>
           <button class="button button-ghost button-small" type="button" data-go="noop">Open NOOP</button>
         </div>
-        <p id="noopHomeSummary" class="medical-note">No NOOP data yet.</p>
+        <p id="noopHomeSummary" class="medical-note">Connect NOOP to import recovery and heart-rate data. Open NOOP → Connect NOOP to get started. Your existing VANTAGE vitals remain separate.</p>
       </section>
 
       <section class="panel">
@@ -1296,11 +1296,11 @@
   <nav class="bottom-nav" aria-label="Primary navigation">
     <button class="active" data-nav="dashboard"><span>◫</span>Home</button>
     <button data-nav="workout"><span>⚡</span>Workout</button>
+    <button data-nav="noop"><span>♥</span>NOOP</button>
     <button data-nav="meals"><span>◎</span>Meals</button>
     <button data-nav="vitals"><span>♥</span>Vitals</button>
     <button data-nav="recovery"><span>↻</span>Recovery</button>
     <button data-nav="supplements"><span>＋</span>Supps</button>
-    <button data-nav="noop"><span>♥</span>NOOP</button>
     <button data-nav="metrics"><span>▥</span>Metrics</button>
     <button data-nav="biolab"><span>◉</span>BioLab</button>
     <button data-nav="cloud"><span>☁</span>Cloud</button>
@@ -1551,7 +1551,7 @@
   </dialog>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-  <script type="module" src="app.js?v=1.6.0"></script>\n  <script type="module" src="cloud-sync-ui.js?v=1.6.0-cloud2"></script>
-  <script type="module" src="noop-integration-ui.js?v=1.6.0"></script>
+  <script type="module" src="app.js?v=1.6.1"></script>\n  <script type="module" src="cloud-sync-ui.js?v=1.6.1-cloud2"></script>
+  <script type="module" src="noop-integration-ui.js?v=1.6.1"></script>
 </body>
 </html>

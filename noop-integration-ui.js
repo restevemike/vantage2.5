@@ -1,6 +1,6 @@
-import {cloudAuthenticatedClient,cloudConfig} from "./cloud-sync.js?v=1.6.0";
-import * as db from "./db.js?v=1.6.0";
-import {decodeHeartRateMeasurement,heartRateZone,summarizeHeartRate} from "./noop-metrics.js?v=1.6.0";
+import {cloudAuthenticatedClient,cloudConfig} from "./cloud-sync.js?v=1.6.1";
+import * as db from "./db.js?v=1.6.1";
+import {decodeHeartRateMeasurement,heartRateZone,summarizeHeartRate} from "./noop-metrics.js?v=1.6.1";
 
 // Optional module: failures never interrupt the main VANTAGE application.
 const $=selector=>document.querySelector(selector);
@@ -76,7 +76,7 @@ async function refresh(){
   const latest=(daily.data||[]).sort((a,b)=>String(b.record_key?.day||"").localeCompare(String(a.record_key?.day||"")))[0];
   showLatest(latest);showReviews(reviews.data||[]);
   if($("#noopHomeCard")){
-   $("#noopHomeCard").hidden=!latest;
+   $("#noopHomeCard").hidden=false;
    if(latest){
     const d=latest.datum||{};
     show("#noopHomeSummary","NOOP "+value(latest.record_key?.day)+" · Recovery "+value(d.recovery)+
