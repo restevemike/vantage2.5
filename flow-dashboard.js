@@ -124,7 +124,7 @@ async function refreshFlow() {
       const weightTrend = $("#flowWeightTrend");
       weightTrend.textContent = delta == null ? "Weight trend requires another dated reading." :
         "Weight vs previous reading: " + (delta >= 0 ? "+" : "") + fmt(delta,2) +
-        " kg · single-day variation may reflect hydration and glycogen.";
+        " kg · short-term fluctuations can reflect hydration and glycogen.";
     }
     status.textContent = "Flow refreshed " + new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}) +
       (latestVitals?.date === currentDay ? " · vitals saved today" : " · no saved vitals today");
@@ -198,6 +198,7 @@ function applyReview() {
 function init() {
   if (!$("#flowPanel")||!$("#flowOcrInput"))return;
   $("#flowRefresh").addEventListener("click",()=>void refreshFlow());
+  $("#flowOpenOcr")?.addEventListener("click",()=>setTimeout(()=>$("#flowVitalsOcr")?.scrollIntoView({behavior:"smooth",block:"start"}),120));
   const input=$("#flowOcrInput");
   input.addEventListener("change",()=>{
     ocrFile=input.files?.[0]||null;
