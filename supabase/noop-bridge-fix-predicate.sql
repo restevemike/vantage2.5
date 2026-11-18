@@ -16,7 +16,7 @@ declare h jsonb := p_envelope->'header';
         rep uuid;
         num_part int;
         total_parts int;
-        selector text;
+        v_selector text;
         first_bound text;
         last_bound text;
         staged int;
@@ -49,10 +49,10 @@ begin
   rep:=(w->>'replacementId')::uuid;
   num_part:=(w->>'part')::int;
   total_parts:=(w->>'parts')::int;
-  selector:=w->>'selector';first_bound:=w->>'startInclusive';last_bound:=w->>'endExclusive';
+  v_selector:=w->>'selector';first_bound:=w->>'startInclusive';last_bound:=w->>'endExclusive';
   if num_part<1 or total_parts<1 or num_part>total_parts or total_parts>100 or
-  selector not in ('day','startTs') or first_bound is null or last_bound is null or
-  (v_stream='dailyMetric' and selector<>'day') or (v_stream<>'dailyMetric' and selector<>'startTs')
+  v_selector not in ('day','startTs') or first_bound is null or last_bound is null or
+  (v_stream='dailyMetric' and v_selector<>'day') or (v_stream<>'dailyMetric' and v_selector<>'startTs')
   then raise exception 'Invalid NOOP replacement window'; end if;
   select count(*) into scope_conflicts from public.vantage_noop_window_parts
   where user_id=p_user_id and source_id=source and device_id=device and stream=v_stream
@@ -60,12 +60,12 @@ begin
   if scope_conflicts>0 then raise exception 'Another replacement is incomplete'; end if;
   if exists(select 1 from public.vantage_noop_window_parts wp where wp.user_id=p_user_id
     and wp.source_id=source and wp.device_id=device and wp.stream=v_stream
-    and wp.replacement_id=rep and (wp.parts<>total_parts or wp.selector<>selector or
+    and wp.replacement_id=rep and (wp.parts<>total_parts or wp.selector<>v_selector or
       wp.start_inclusive<>first_bound or wp.end_exclusive<>last_bound))
     then raise exception 'Inconsistent replacement metadata';end if;
   insert into public.vantage_noop_window_parts(user_id,source_id,device_id,stream,
    replacement_id,part,parts,selector,start_inclusive,end_exclusive,record_list,batch_hash)
-  values(p_user_id,source,device,v_stream,rep,num_part,total_parts,selector,first_bound,last_bound,input_rows,p_hash)
+  values(p_user_id,source,device,v_stream,rep,num_part,total_parts,v_selector,first_bound,last_bound,input_rows,p_hash)
   on conflict do nothing;
   if not found then
     if not exists(select 1 from public.vantage_noop_window_parts wp where wp.user_id=p_user_id and wp.source_id=source
@@ -79,11 +79,11 @@ begin
    -- Atomic authoritative replacement, scoped only to source, device, stream and window.
    delete from public.vantage_noop_records rr
    where rr.user_id=p_user_id and rr.source_id=source and rr.device_id=device and rr.stream=v_stream
-   and (case when selector='day' then rr.record_key->>'day'
+   and (case when v_selector='day' then rr.record_key->>'day'
          else rr.record_key->>'startTs' end)>=first_bound
-   and (case when selector='day' then rr.record_key->>'day'
+   and (case when v_selector='day' then rr.record_key->>'day'
          else lpad(rr.record_key->>'startTs',16,'0') end)
-       <(case when selector='day' then last_bound else lpad(last_bound,16,'0') end);
+       <(case when v_selector='day' then last_bound else lpad(last_bound,16,'0') end);
    for entry in select each_row.value from public.vantage_noop_window_parts wp
       cross join lateral jsonb_array_elements(wp.record_list) each_row(value)
       where wp.user_id=p_user_id and wp.source_id=source and wp.device_id=device
