@@ -19,7 +19,7 @@ import { detectHistoricalMarkdown } from './historical-import.js?v=1.6.1';
 import { builtInExerciseLibrary, exerciseCatalogueSummary } from './exercise-catalogue.js?v=1.6.1';
 import { DEFAULT_FEATURE_FLAGS, PROGRAM_PRESETS, HDM_EXTENDED_META, HDM_EXTENDED_SCHEDULE, hdmTransitionGate, normaliseFeatureFlags, activeProgram, nextProgramSlot, advanceProgramProgress, programPresetById } from './programs.js?v=1.6.1';
 
-const APP_VERSION = '1.6.1';
+const APP_VERSION = '1.6.3';
 let vitalsFormDirty = false;
 let loadedVitalsDate = null;
 // v1.3.10.6 hotfix: removed stale FTMS renderer calls after FTMS UI was removed from normal LISS.
