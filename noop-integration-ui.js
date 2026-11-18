@@ -1,6 +1,6 @@
-import {cloudAuthenticatedClient,cloudConfig} from "./cloud-sync.js?v=1.6.0";
-import * as db from "./db.js?v=1.6.0";
-import {decodeHeartRateMeasurement,heartRateZone,summarizeHeartRate} from "./noop-metrics.js?v=1.6.0";
+import {cloudAuthenticatedClient,cloudConfig} from "./cloud-sync.js?v=1.6.1";
+import * as db from "./db.js?v=1.6.1";
+import {decodeHeartRateMeasurement,heartRateZone,summarizeHeartRate} from "./noop-metrics.js?v=1.6.1";
 
 // Optional module: failures never interrupt the main VANTAGE application.
 const $=selector=>document.querySelector(selector);
