@@ -5,6 +5,9 @@ import { parseVitalsScreenText } from '../flow-vitals-parser.js';
 test('weight OCR: labelled kilograms and decimal comma', () => {
  assert.equal(parseVitalsScreenText('Weight 98,45 kg','scales').values.weight,98.45);
 });
+test('weight OCR: unit printed in parentheses before the value', () => {
+ assert.equal(parseVitalsScreenText('Weight (kg) 98.4','scales').values.weight,98.4);
+});
 test('weight OCR: pounds converted explicitly', () => {
  assert.ok(Math.abs(parseVitalsScreenText('WEIGHT 220 lb','scales').values.weight-99.79) < 0.02);
 });
