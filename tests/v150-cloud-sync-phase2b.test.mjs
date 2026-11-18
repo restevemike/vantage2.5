@@ -26,11 +26,11 @@ test('v1.6.1 ships incremental cloud sync with explicit magic-link redirect', as
   assert.match(ui, /Sync core records/);
   assert.match(ui, /Sync private media/);
 
-  assert.match(html, /v1\.6\.1/);
-  assert.match(html, /app\.js\?v=1\.6\.1/);
-  assert.match(sw, /vantage-training-console-v16-1/);
+  assert.match(html, /v1\.6\.3/);
+  assert.match(html, /app\.js\?v=1\.6\.3/);
+  assert.match(sw, /vantage-training-console-v16-3/);
   assert.equal(manifest.start_url, './?pwa=161');
-  assert.equal(pkg.version, '1.6.1');
+  assert.equal(pkg.version, '1.6.3');
 });
 
 test('Phase 2B keeps Phase 2A fallback snapshot restore available', async () => {
