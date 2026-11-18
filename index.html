@@ -84,6 +84,7 @@
         </div>
       </div>
 
+      <section class="panel"><div class="panel-heading"><h3>Live strap HR</h3><button class="button button-ghost button-small" data-go="noop" type="button">Open live monitor</button></div><p id="noopWorkoutStatus" class="medical-note">Connect a strap on the NOOP tab to see live heart rate.</p></section>
       <section id="activeCycleBanner" class="cycle-banner" hidden></section>
 
       <section class="panel workout-setup">
@@ -1005,6 +1006,68 @@
     </section>
 
 
+    <section id="noopScreen" class="screen" data-screen="noop">
+      <div class="screen-heading">
+        <div><p class="eyebrow">Optional wearable integration</p><h2>NOOP & live HR</h2></div>
+      </div>
+
+      <section class="panel data-actions">
+        <h3>NOOP → VANTAGE data bridge</h3>
+        <p>NOOP remains the strap collector. Its Experimental self-hosted push can export selected data to VANTAGE Cloud after strap offload or from NOOP's Export now control. Nothing is imported until you configure the connection.</p>
+        <div id="noopStatus" role="status" class="import-status">Sign in to VANTAGE Cloud to configure NOOP.</div>
+        <div id="noopConnectionInfo" class="medical-note">Checking connection...</div>
+        <details>
+          <summary>Connect NOOP (experimental)</summary>
+          <div class="form-grid">
+            <label class="full-width">Self-hosted push endpoint
+              <input id="noopEndpoint" type="text" readonly autocomplete="off">
+            </label>
+            <button id="noopCopyEndpoint" type="button" class="button button-ghost button-wide">Copy endpoint URL</button>
+            <button id="noopCreateToken" type="button" class="button button-primary button-wide">Generate / rotate private token</button>
+            <div id="noopTokenGroup" class="full-width" hidden>
+              <label>Connection token — displayed once
+                <input id="noopToken" type="text" readonly autocomplete="off">
+              </label>
+              <button id="noopCopyToken" class="button button-ghost button-wide" type="button">Copy private token</button>
+            </div>
+          </div>
+          <p class="medical-note">In the NOOP Android app: Settings → Experimental → Self-hosted push. Enter the endpoint and token, select Test connection, then Export now. Wi-Fi may be required by NOOP's default network setting. Never share your token or put it in screenshots. Rotating it revokes the previous token.</p>
+        </details>
+        <button id="noopRefresh" type="button" class="button button-ghost button-wide">Refresh NOOP readings</button>
+      </section>
+
+      <section class="panel data-actions">
+        <h3>Latest NOOP daily snapshot</h3>
+        <div id="noopLatest" class="import-summary"><p class="medical-note">Awaiting source data.</p></div>
+        <p class="medical-note">Data provenance: NOOP daily summaries are imported historical snapshots, not continuous live vitals. VANTAGE's manual vitals records are not overwritten.</p>
+      </section>
+
+      <section class="panel data-actions">
+        <h3>Scheduled biometric check-ins</h3>
+        <p>Generated at 07:00, 14:00 and 21:00 Europe/London time from the latest received NOOP data. A four-hour HR sample window is analysed where data exists. No fabricated fresh HRV or recovery values.</p>
+        <div id="noopReviews"><p class="medical-note">No reviews available yet.</p></div>
+      </section>
+
+      <section class="panel data-actions">
+        <h3>Live workout heart rate</h3>
+        <p>Connect a Bluetooth heart-rate sensor directly from Android Chrome. The strap must expose the standard Heart Rate service and permit connection alongside NOOP. Keep VANTAGE open during recording.</p>
+        <div class="storage-status">
+          <div>Current HR <strong id="noopLiveBpm">—</strong></div>
+          <div>Average HR <strong id="noopLiveAvg">—</strong></div>
+          <div>Peak HR <strong id="noopLivePeak">—</strong></div>
+          <div>Elapsed <strong id="noopLiveElapsed">—</strong></div>
+          <div>Zone <strong id="noopLiveZone">—</strong></div>
+        </div>
+        <label>Measured maximum HR (optional, for zones)
+          <input id="noopMaxHr" type="number" min="100" max="240" placeholder="Enter known max HR" inputmode="numeric">
+        </label>
+        <div id="noopLiveStatus" class="import-status" role="status">No strap connected.</div>
+        <button id="noopBleConnect" type="button" class="button button-primary button-wide">Connect live HR sensor</button>
+        <button id="noopBleStop" type="button" class="button button-ghost button-wide">Stop & save HR session</button>
+        <p class="medical-note">Experimental: live heart rate requires a compatible Bluetooth service. Android may suspend the browser with the screen off. These readings are training information, not medical monitoring or an emergency alert system.</p>
+      </section>
+    </section>
+
     <section id="cloudScreen" class="screen" data-screen="cloud">
       <div class="screen-heading">
         <div>
@@ -1231,6 +1294,7 @@
     <button data-nav="vitals"><span>♥</span>Vitals</button>
     <button data-nav="recovery"><span>↻</span>Recovery</button>
     <button data-nav="supplements"><span>＋</span>Supps</button>
+    <button data-nav="noop"><span>♥</span>NOOP</button>
     <button data-nav="metrics"><span>▥</span>Metrics</button>
     <button data-nav="biolab"><span>◉</span>BioLab</button>
     <button data-nav="cloud"><span>☁</span>Cloud</button>
@@ -1482,5 +1546,6 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script type="module" src="app.js?v=1.5.9"></script>\n  <script type="module" src="cloud-sync-ui.js?v=1.5.9-cloud2"></script>
+  <script type="module" src="noop-integration-ui.js?v=1.6.0"></script>
 </body>
 </html>
