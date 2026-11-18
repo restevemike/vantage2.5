@@ -1,7 +1,7 @@
-import * as db from "./db.js?v=1.6.3";
-import { calculateReadiness } from "./readiness.js?v=1.6.3";
-import { cloudAuthenticatedClient } from "./cloud-sync.js?v=1.6.3";
-import { runExperimentalOcr } from "./ocr-engine.js?v=1.6.3";
+import * as db from "./db.js?v=1.6.1";
+import { calculateReadiness } from "./readiness.js?v=1.6.1";
+import { cloudAuthenticatedClient } from "./cloud-sync.js?v=1.6.1";
+import { runExperimentalOcr } from "./ocr-engine.js?v=1.6.1";
 import { parseVitalsScreenText } from "./flow-vitals-parser.js?v=1.6.3";
 
 // Flow is a read-only synthesis of local confirmed vitals and NOOP historical snapshots.
