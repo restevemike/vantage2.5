@@ -254,7 +254,7 @@ function buildWorkoutMarkdown(session, media = [], mediaAudit = null) {
     fat: Number(nutritionSummary.fat || 0),
     calories: Number(nutritionSummary.calories || 0)
   } : null);
-  return createWorkoutMarkdown({
+  const markdown = createWorkoutMarkdown({
     session,
     sessions: state.sessions,
     vitals,
@@ -267,6 +267,22 @@ function buildWorkoutMarkdown(session, media = [], mediaAudit = null) {
     appVersion: APP_VERSION,
     coachPackRevision: session.coachPackRevision || 1
   });
+  const live = session.noopLiveHr;
+  if (!live) return markdown;
+  return markdown + [
+    '', '## Live Bluetooth HR evidence (NOOP companion)',
+    '- Source: ' + String(live.source || 'Bluetooth Heart Rate Profile'),
+    '- Device: ' + String(live.device || 'Unknown'),
+    '- Started: ' + String(live.startedAt || 'Unknown'),
+    '- Ended: ' + String(live.endedAt || 'Unknown'),
+    '- Duration (seconds): ' + String(live.durationSeconds ?? 'Unknown'),
+    '- Sample count: ' + String(live.summary?.count ?? 0),
+    '- Average heart rate (bpm): ' + String(live.summary?.average ?? 'Unknown'),
+    '- Peak heart rate (bpm): ' + String(live.summary?.peak ?? 'Unknown'),
+    '- Source confidence: Live BLE stream; individual samples are saved in local settings and synced to Cloud.',
+    '- Interpretation: Training information only; not clinical monitoring.',
+    ''
+  ].join('\n');
 }
 
 function isExerciseSessionRole(role) {
@@ -6714,6 +6730,18 @@ function bindEvents() {
     const detail = event.detail || {};
     const count = Number(detail.downloaded || 0) + Number(detail.deleted || 0);
     if (count > 0) toast(`Cloud update applied · ${count} local change${count === 1 ? '' : 's'}`);
+  });
+  window.addEventListener('vantage-noop-live-summary', event => {
+    if (!state.currentSession || !event.detail?.summary) return;
+    const hr = event.detail;
+    state.currentSession.noopLiveHr = {
+      source: 'Bluetooth Heart Rate Profile', device: String(hr.device || 'HR sensor'),
+      startedAt: hr.startedAt, endedAt: hr.endedAt, durationSeconds: hr.durationSeconds,
+      summary: hr.summary
+    };
+    persistDraft();
+    renderWorkout();
+    toast('Live strap heart-rate summary linked to workout');
   });
   $('#recordRestDayButton').addEventListener('click', recordRestDay);
   $('#todayPlan').addEventListener('click', event => {
