@@ -32,11 +32,25 @@ async function generateToken(){
 function appendLine(host,text){
  const p=document.createElement("p");p.className="medical-note";p.textContent=text;host.append(p);
 }
+const NOOP_DAILY_BIOMETRICS=["recovery","avgHrv","restingHr","totalSleepMin","deepMin","remMin","lightMin","respRateBpm","spo2Pct"];
+function dailyCompleteness(datum){
+ const d=datum||{};
+ return NOOP_DAILY_BIOMETRICS.reduce((count,key)=>
+  count+(typeof d[key]==="number"&&Number.isFinite(d[key])?1:0),0);
+}
+// Keep source records intact: on the same day prefer complete biometrics over a later sparse source.
+function latestNoopDaily(rows){
+ return [...(rows||[])].sort((a,b)=>
+  String(b.record_key?.day||"").localeCompare(String(a.record_key?.day||""))||
+  dailyCompleteness(b.datum)-dailyCompleteness(a.datum)||
+  String(b.received_at||"").localeCompare(String(a.received_at||""))
+ )[0]||null;
+}
 function showLatest(row){
  const target=$("#noopLatest");target.replaceChildren();
  if(!row){appendLine(target,"No NOOP readings received yet. Enable push in NOOP and use Export now.");return;}
  const d=row.datum||{},date=row.record_key?.day||"Date unknown";
- appendLine(target,"Source: NOOP daily snapshot from "+date+" (not a live remeasurement).");
+ appendLine(target,"Source: NOOP daily snapshot from "+date+" · "+value(row.device_id)+" (not a live remeasurement).");
  appendLine(target,"Recovery "+value(d.recovery)+"% · HRV "+value(d.avgHrv)+" ms · RHR "+value(d.restingHr)+" bpm");
  appendLine(target,"Sleep "+(d.totalSleepMin==null?"—":(Number(d.totalSleepMin)/60).toFixed(1))+" h · strain "+value(d.strain)+
  " · SpO₂ "+value(d.spo2Pct)+"% · respiratory "+value(d.respRateBpm));
@@ -64,7 +78,7 @@ async function refresh(){
   const {client,userId}=await cloud();
   const [conn,daily,reviews]=await Promise.all([
    client.from("vantage_noop_connections").select("enabled,last_received_at").eq("user_id",userId).maybeSingle(),
-   client.from("vantage_noop_records").select("datum,record_key,received_at").eq("user_id",userId)
+   client.from("vantage_noop_records").select("datum,record_key,received_at,device_id").eq("user_id",userId)
     .eq("stream","dailyMetric").order("received_at",{ascending:false}).limit(60),
    client.from("vantage_noop_reviews").select("review_date,slot,summary,generated_at").eq("user_id",userId)
     .order("review_date",{ascending:false}).order("generated_at",{ascending:false}).limit(18)
@@ -73,7 +87,7 @@ async function refresh(){
   show("#noopConnectionInfo",conn.data?
     (conn.data.enabled?"Active":"Disabled")+" · Last NOOP upload "+moment(conn.data.last_received_at):
     "No NOOP connection configured");
-  const latest=(daily.data||[]).sort((a,b)=>String(b.record_key?.day||"").localeCompare(String(a.record_key?.day||"")))[0];
+  const latest=latestNoopDaily(daily.data);
   showLatest(latest);showReviews(reviews.data||[]);
   if($("#noopHomeCard")){
    $("#noopHomeCard").hidden=false;
