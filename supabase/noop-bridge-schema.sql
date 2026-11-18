@@ -132,11 +132,11 @@ begin
   (v_stream='dailyMetric' and selector<>'day') or (v_stream<>'dailyMetric' and selector<>'startTs')
   then raise exception 'Invalid NOOP replacement window'; end if;
   select count(*) into scope_conflicts from public.vantage_noop_window_parts
-  where user_id=p_user_id and source_id=source and device_id=device and stream=vantage_noop_accept_secure.v_stream
+  where user_id=p_user_id and source_id=source and device_id=device and stream=v_stream
     and replacement_id<>rep;
   if scope_conflicts>0 then raise exception 'Another replacement is incomplete'; end if;
   if exists(select 1 from public.vantage_noop_window_parts wp where wp.user_id=p_user_id
-    and wp.source_id=source and wp.device_id=device and wp.stream=vantage_noop_accept_secure.v_stream
+    and wp.source_id=source and wp.device_id=device and wp.stream=v_stream
     and wp.replacement_id=rep and (wp.parts<>total_parts or wp.selector<>selector or
       wp.start_inclusive<>first_bound or wp.end_exclusive<>last_bound))
     then raise exception 'Inconsistent replacement metadata';end if;
@@ -146,16 +146,16 @@ begin
   on conflict do nothing;
   if not found then
     if not exists(select 1 from public.vantage_noop_window_parts wp where wp.user_id=p_user_id and wp.source_id=source
-     and wp.device_id=device and wp.stream=vantage_noop_accept_secure.v_stream and wp.replacement_id=rep
+     and wp.device_id=device and wp.stream=v_stream and wp.replacement_id=rep
      and wp.part=num_part and wp.batch_hash=p_hash) then raise exception 'Conflicting replacement part'; end if;
   end if;
   select count(*) into staged from public.vantage_noop_window_parts wp
   where wp.user_id=p_user_id and wp.source_id=source and wp.device_id=device
-    and wp.stream=vantage_noop_accept_secure.v_stream and wp.replacement_id=rep;
+    and wp.stream=v_stream and wp.replacement_id=rep;
   if staged=total_parts then
    -- Atomic authoritative replacement, scoped only to source, device, stream and window.
    delete from public.vantage_noop_records rr
-   where rr.user_id=p_user_id and rr.source_id=source and rr.device_id=device and rr.stream=vantage_noop_accept_secure.v_stream
+   where rr.user_id=p_user_id and rr.source_id=source and rr.device_id=device and rr.stream=v_stream
    and (case when selector='day' then rr.record_key->>'day'
          else rr.record_key->>'startTs' end)>=first_bound
    and (case when selector='day' then rr.record_key->>'day'
@@ -164,7 +164,7 @@ begin
    for entry in select each_row.value from public.vantage_noop_window_parts wp
       cross join lateral jsonb_array_elements(wp.record_list) each_row(value)
       where wp.user_id=p_user_id and wp.source_id=source and wp.device_id=device
-       and wp.stream=vantage_noop_accept_secure.v_stream and wp.replacement_id=rep
+       and wp.stream=v_stream and wp.replacement_id=rep
    loop
     insert into public.vantage_noop_records(user_id,source_id,device_id,stream,record_key,datum)
     values(p_user_id,source,device,v_stream,entry->'key',entry->'data')
@@ -173,7 +173,7 @@ begin
    end loop;
    delete from public.vantage_noop_window_parts wp
    where wp.user_id=p_user_id and wp.source_id=source and wp.device_id=device and
-     wp.stream=vantage_noop_accept_secure.v_stream and wp.replacement_id=rep;
+     wp.stream=v_stream and wp.replacement_id=rep;
   end if;
  else raise exception 'Unknown delivery type'; end if;
  insert into public.vantage_noop_batches(user_id,source_id,device_id,batch_id,decoded_hash,ack)
