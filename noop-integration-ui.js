@@ -128,6 +128,10 @@ async function stop(){
  }catch{/* no active workout */}
  try{
   await db.put("settings",{key:"noop-live-hr-"+record.startedAt,value:record});
+  window.dispatchEvent(new CustomEvent("vantage-noop-live-summary",{
+   detail:{source:record.source,device:record.device,startedAt:record.startedAt,
+    endedAt:record.endedAt,durationSeconds:record.durationSeconds,summary:record.summary}
+  }));
  }catch(e){show("#noopLiveStatus","Save failed: "+(e?.message||e)+". Do not leave this screen yet.");return;}
  try{await liveCharacteristic?.stopNotifications();}catch{/* already disconnected */}
  try{liveCharacteristic?.removeEventListener("characteristicvaluechanged",onHeartRate);}catch{/* no-op */}
