@@ -23,9 +23,9 @@ test('v1.6.1 PWA reloads new index and scripts without altering identity',async(
  const [app,html,manifest,sw]=await Promise.all(
   ['app.js','index.html','manifest.webmanifest','sw.js'].map(p=>readFile(new URL('../'+p,import.meta.url),'utf8'))
  );
- assert.match(app,/APP_VERSION = '1\.6\.1'/);
- assert.match(html,/noop-integration-ui\.js\?v=1\.6\.1/);
- assert.match(sw,/vantage-training-console-v16-1/);
+ assert.match(app,/APP_VERSION = '1\.6\.3'/);
+ assert.match(html,/noop-integration-ui\.js\?v=1\.6\.3/);
+ assert.match(sw,/vantage-training-console-v16-3/);
  const pwa=JSON.parse(manifest);
  assert.equal(pwa.start_url,'./?pwa=161');
  assert.equal(pwa.id,'./vantage-training-console-v133');
