@@ -75,6 +75,15 @@ async function refresh(){
     "No NOOP connection configured");
   const latest=(daily.data||[]).sort((a,b)=>String(b.record_key?.day||"").localeCompare(String(a.record_key?.day||"")))[0];
   showLatest(latest);showReviews(reviews.data||[]);
+  if($("#noopHomeCard")){
+   $("#noopHomeCard").hidden=!latest;
+   if(latest){
+    const d=latest.datum||{};
+    show("#noopHomeSummary","NOOP "+value(latest.record_key?.day)+" · Recovery "+value(d.recovery)+
+     "% · HRV "+value(d.avgHrv)+" ms · RHR "+value(d.restingHr)+
+     " bpm. Historical imported snapshot — not an updated live measurement.");
+   }
+  }
   show("#noopStatus","Cloud readings refreshed "+moment(new Date().toISOString()));
  }catch(e){show("#noopStatus","NOOP data unavailable: "+(e?.message||e)+". Check Cloud sign-in.");}
  finally{refreshing=false;}
@@ -153,9 +162,10 @@ function init(){
  $('[data-nav="noop"]')?.addEventListener("click",()=>void refresh());
  window.addEventListener("vantage-cloud-auth-change",()=>{
   $("#noopEndpoint").value=endpoint();
-  if($("#noopScreen").classList.contains("active"))void refresh();
+  void refresh();
  });
  setInterval(()=>{if($("#noopScreen").classList.contains("active"))void refresh();},180000);
+ setTimeout(()=>void refresh(),2500);
  setInterval(()=>{if(liveStarted)renderLive();},1000);
  renderLive();
 }
