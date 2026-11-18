@@ -1316,3 +1316,31 @@ html.exercise-drag-active, body.exercise-drag-active { user-select: none; }
 .plain-list{margin:10px 0 0;padding-left:20px;color:var(--muted)}
 .plain-list li{margin:7px 0}
 @media (max-width:640px){.hdm-phase-metrics{grid-template-columns:1fr}.hdm-extension-card .cycle-form-actions{display:grid;grid-template-columns:1fr}.hdm-extension-card .cycle-form-actions .button{width:100%}}
+
+/* FLOW: consolidated daily health and training signals, additive to the Home dashboard. */
+.flow-panel { display:grid; gap:12px; }
+.flow-panel .panel-heading { flex-wrap:wrap; gap:10px; }
+.flow-panel .panel-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.flow-panel .medical-note { margin:0; }
+.flow-tile-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.flow-tile {
+  min-width:0; display:flex; flex-direction:column; gap:6px; padding:14px 12px;
+  border:1px solid var(--line); border-radius:15px; background:var(--surface-2);
+}
+.flow-tile span { color:var(--muted); font-size:.79rem; font-weight:700; letter-spacing:.02em; }
+.flow-tile strong { font-size:clamp(1.12rem,4vw,1.6rem); font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.flow-tile small { color:var(--muted); font-size:.7rem; line-height:1.32; overflow-wrap:anywhere; }
+.flow-tile-red { border-color:var(--red); }
+.flow-tile-amber { border-color:var(--amber); }
+.flow-advice { border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:12px; padding:14px; background:var(--surface-2); }
+.flow-advice p { margin:8px 0 0; color:var(--text); line-height:1.5; }
+.flow-advice strong { display:block; font-size:1.06rem; }
+.flow-advice-red { border-left-color:var(--red); }
+.flow-advice-amber { border-left-color:var(--amber); }
+.flow-advice-green { border-left-color:var(--green); }
+.flow-ocr-panel { display:grid; gap:12px; }
+.flow-ocr-preview { display:block; max-height:300px; max-width:100%; margin:auto; border-radius:12px; object-fit:contain; }
+.flow-ocr-review { padding:12px; border:1px solid var(--line); border-radius:12px; background:var(--surface-2); }
+.flow-ocr-review p { grid-column:1/-1; margin:0; }
+.flow-ocr-raw { font-size:.8rem; white-space:pre-wrap; overflow-wrap:anywhere; padding:12px; max-height:260px; overflow:auto; border:1px solid var(--line); border-radius:10px; }
+@media(min-width:750px) { .flow-tile-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
