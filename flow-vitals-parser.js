@@ -16,7 +16,7 @@ export function parseVitalsScreenText(input, kind = "scales") {
   const values = {};
   const warnings = ["OCR is a suggestion only. Confirm the screen values, units and date before saving."];
   if (kind === "scales") {
-    const labelled = text.match(/\\b(?:body\\s*weight|weight|wt)\\b\\s*(?:\\(\\s*(kg|kgs?|lb|lbs)\\s*\\))?\\s*[:=\\-]?\\s*(\\d{2,3}(?:[.,]\\d{1,2})?)\\s*(kg|kgs?|lb|lbs)?\\b/i);
+    const labelled = text.match(/\b(?:body\s*weight|weight|wt)\b\s*(?:\(\s*(kg|kgs?|lb|lbs)\s*\))?\s*[:=\-]?\s*(\d{2,3}(?:[.,]\d{1,2})?)\s*(kg|kgs?|lbs?)?(?=\s|$|[)%])/i);
     const unitReadings = [...text.matchAll(/\\b(\\d{2,3}(?:[.,]\\d{1,2})?)\\s*(kg|kgs?|lb|lbs)\\b/gi)];
     // Body-composition scales also display muscle/fat mass. Do not treat the first kg token as body weight.
     const unitReading = unitReadings.length === 1 && !/\\b(?:muscle\\s*mass|fat\\s*mass|bone\\s*mass|fat.free\\s*mass|water\\s*mass)\\b/i.test(text)
