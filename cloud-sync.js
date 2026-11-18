@@ -64,6 +64,13 @@ export async function configureCloud({ url, key }) {
 }
 export function cloudConfig() { return readConfig(); }
 export async function cloudSession() { await loadSupabase(); return currentSession; }
+/** Authenticated account-scoped Data API client for optional companion modules. */
+export async function cloudAuthenticatedClient() {
+  const client = await loadSupabase();
+  const session = (await client.auth.getSession()).data.session;
+  if (!session?.user?.id) throw new Error('Sign in on the Cloud tab before using NOOP integration.');
+  return { client, userId: session.user.id };
+}
 
 export async function sendMagicLink(email) {
   const client = await loadSupabase();
