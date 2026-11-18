@@ -2,7 +2,7 @@ import {
   configureCloud, cloudConfig, cloudSession, sendMagicLink, signOutCloud,
   syncCoreIncremental, syncMediaIncremental, syncAllIncremental, rebootstrapFromCloud, pullNewestVitalsFromCloud, cloudSyncStatus,
   pushCoreSnapshot, inspectCloudSnapshot, restoreCoreSnapshot
-} from './cloud-sync.js?v=1.5.9';
+} from './cloud-sync.js?v=1.6.0';
 
 function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));

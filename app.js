@@ -1,25 +1,25 @@
-import * as db from './db.js?v=1.5.9';
-import { templates, exerciseLibrary, sampleVitals, sampleSessions, sampleMeals } from './seed.js?v=1.5.9';
-import { parseVantageWorkbook, nameKey, stableId } from './xlsx-import.js?v=1.5.9';
-import { calculateReadiness } from './readiness.js?v=1.5.9';
-import { parseVitalsMarkdown, applyVitalsToForm, VITALS_FILE_PROMPT, createVitalsMarkdownExample } from './vitals-markdown.js?v=1.5.9';
-import { createWorkoutMarkdown, workoutMarkdownFilename } from './workout-markdown.js?v=1.5.9';
-import { parseNutritionMarkdown, createNutritionMarkdown, nutritionMarkdownFilename, MACRO_FILE_PROMPT } from './nutrition-markdown.js?v=1.5.9';
-import { createLissMarkdown, lissMarkdownFilename, parseLissAnalysisMarkdown, cleanSources, sourcesToLegacyMetrics, legacyMetricsToSources, compareLissSources, classifyLissSession, sanitiseLissAnalysisEvidence } from './liss-markdown.js?v=1.5.9';
-import { createZip, sha256Hex } from './zip-pack.js?v=1.5.9';
-import { parseBloodworkMarkdown, parseBloodworkAnalysisMarkdown, createBloodworkMarkdown, createBloodworkAnalysisMarkdown, createBloodworkAnalysisRequest, bloodworkMarkdownFilename, bloodworkAnalysisFilename, markerHistory, markerNameKey } from './bloodwork-markdown.js?v=1.5.9';
-import { metricsOverview, exerciseNames, exerciseProgress as buildExerciseProgress, muscleDistribution, weeklyTrainingLoad, nutritionWeightSummary, bodyMeasurementSeries, wearableSummary, readinessAlignment, relativeStrength, flattenStrengthSets, nutritionPerformanceAnalysis, nutritionSessionPerformanceAnalysis, strengthSessionFamilies, cycleWeekNumber, cyclePerformanceSummary, supplementPerformanceComparison, supplementStateOnDate } from './metrics-engine.js?v=1.5.9';
-import { parseStrengthAnalysisMarkdown, strengthAnalysisTemplate } from './strength-analysis.js?v=1.5.9';
-import { runExperimentalOcr, parseFitnessSummaryText, ocrResultRows } from './ocr-engine.js?v=1.5.9';
-import { createRecoveryMarkdown, recoveryMarkdownFilename, recoveryAnalysisTemplate } from './recovery-markdown.js?v=1.5.9';
-import { findBestPreviousStrengthSession, matchExerciseFromSession, canonicalExerciseIdentity, exerciseCompatibility, historyAuditForExercise } from './workout-history.js?v=1.5.9';
-import { duplicateSourceExerciseIds, strengthIdentityBlockingIssues, inferMachineBrand, inferMachineModel, inferMovementPattern } from './strength-integrity.js?v=1.5.9';
-import { mediaHashAudit, roleContentValidation, ocrValidationState, ocrMediaAuthoritative } from './evidence-integrity.js?v=1.5.9';
-import { detectHistoricalMarkdown } from './historical-import.js?v=1.5.9';
-import { builtInExerciseLibrary, exerciseCatalogueSummary } from './exercise-catalogue.js?v=1.5.9';
-import { DEFAULT_FEATURE_FLAGS, PROGRAM_PRESETS, HDM_EXTENDED_META, HDM_EXTENDED_SCHEDULE, hdmTransitionGate, normaliseFeatureFlags, activeProgram, nextProgramSlot, advanceProgramProgress, programPresetById } from './programs.js?v=1.5.9';
+import * as db from './db.js?v=1.6.0';
+import { templates, exerciseLibrary, sampleVitals, sampleSessions, sampleMeals } from './seed.js?v=1.6.0';
+import { parseVantageWorkbook, nameKey, stableId } from './xlsx-import.js?v=1.6.0';
+import { calculateReadiness } from './readiness.js?v=1.6.0';
+import { parseVitalsMarkdown, applyVitalsToForm, VITALS_FILE_PROMPT, createVitalsMarkdownExample } from './vitals-markdown.js?v=1.6.0';
+import { createWorkoutMarkdown, workoutMarkdownFilename } from './workout-markdown.js?v=1.6.0';
+import { parseNutritionMarkdown, createNutritionMarkdown, nutritionMarkdownFilename, MACRO_FILE_PROMPT } from './nutrition-markdown.js?v=1.6.0';
+import { createLissMarkdown, lissMarkdownFilename, parseLissAnalysisMarkdown, cleanSources, sourcesToLegacyMetrics, legacyMetricsToSources, compareLissSources, classifyLissSession, sanitiseLissAnalysisEvidence } from './liss-markdown.js?v=1.6.0';
+import { createZip, sha256Hex } from './zip-pack.js?v=1.6.0';
+import { parseBloodworkMarkdown, parseBloodworkAnalysisMarkdown, createBloodworkMarkdown, createBloodworkAnalysisMarkdown, createBloodworkAnalysisRequest, bloodworkMarkdownFilename, bloodworkAnalysisFilename, markerHistory, markerNameKey } from './bloodwork-markdown.js?v=1.6.0';
+import { metricsOverview, exerciseNames, exerciseProgress as buildExerciseProgress, muscleDistribution, weeklyTrainingLoad, nutritionWeightSummary, bodyMeasurementSeries, wearableSummary, readinessAlignment, relativeStrength, flattenStrengthSets, nutritionPerformanceAnalysis, nutritionSessionPerformanceAnalysis, strengthSessionFamilies, cycleWeekNumber, cyclePerformanceSummary, supplementPerformanceComparison, supplementStateOnDate } from './metrics-engine.js?v=1.6.0';
+import { parseStrengthAnalysisMarkdown, strengthAnalysisTemplate } from './strength-analysis.js?v=1.6.0';
+import { runExperimentalOcr, parseFitnessSummaryText, ocrResultRows } from './ocr-engine.js?v=1.6.0';
+import { createRecoveryMarkdown, recoveryMarkdownFilename, recoveryAnalysisTemplate } from './recovery-markdown.js?v=1.6.0';
+import { findBestPreviousStrengthSession, matchExerciseFromSession, canonicalExerciseIdentity, exerciseCompatibility, historyAuditForExercise } from './workout-history.js?v=1.6.0';
+import { duplicateSourceExerciseIds, strengthIdentityBlockingIssues, inferMachineBrand, inferMachineModel, inferMovementPattern } from './strength-integrity.js?v=1.6.0';
+import { mediaHashAudit, roleContentValidation, ocrValidationState, ocrMediaAuthoritative } from './evidence-integrity.js?v=1.6.0';
+import { detectHistoricalMarkdown } from './historical-import.js?v=1.6.0';
+import { builtInExerciseLibrary, exerciseCatalogueSummary } from './exercise-catalogue.js?v=1.6.0';
+import { DEFAULT_FEATURE_FLAGS, PROGRAM_PRESETS, HDM_EXTENDED_META, HDM_EXTENDED_SCHEDULE, hdmTransitionGate, normaliseFeatureFlags, activeProgram, nextProgramSlot, advanceProgramProgress, programPresetById } from './programs.js?v=1.6.0';
 
-const APP_VERSION = '1.5.9';
+const APP_VERSION = '1.6.0';
 let vitalsFormDirty = false;
 let loadedVitalsDate = null;
 // v1.3.10.6 hotfix: removed stale FTMS renderer calls after FTMS UI was removed from normal LISS.
@@ -254,7 +254,7 @@ function buildWorkoutMarkdown(session, media = [], mediaAudit = null) {
     fat: Number(nutritionSummary.fat || 0),
     calories: Number(nutritionSummary.calories || 0)
   } : null);
-  return createWorkoutMarkdown({
+  const markdown = createWorkoutMarkdown({
     session,
     sessions: state.sessions,
     vitals,
@@ -267,6 +267,22 @@ function buildWorkoutMarkdown(session, media = [], mediaAudit = null) {
     appVersion: APP_VERSION,
     coachPackRevision: session.coachPackRevision || 1
   });
+  const live = session.noopLiveHr;
+  if (!live) return markdown;
+  return markdown + [
+    '', '## Live Bluetooth HR evidence (NOOP companion)',
+    '- Source: ' + String(live.source || 'Bluetooth Heart Rate Profile'),
+    '- Device: ' + String(live.device || 'Unknown'),
+    '- Started: ' + String(live.startedAt || 'Unknown'),
+    '- Ended: ' + String(live.endedAt || 'Unknown'),
+    '- Duration (seconds): ' + String(live.durationSeconds ?? 'Unknown'),
+    '- Sample count: ' + String(live.summary?.count ?? 0),
+    '- Average heart rate (bpm): ' + String(live.summary?.average ?? 'Unknown'),
+    '- Peak heart rate (bpm): ' + String(live.summary?.peak ?? 'Unknown'),
+    '- Source confidence: Live BLE stream; individual samples are saved in local settings and synced to Cloud.',
+    '- Interpretation: Training information only; not clinical monitoring.',
+    ''
+  ].join('\n');
 }
 
 function isExerciseSessionRole(role) {
@@ -489,7 +505,7 @@ async function buildWorkoutCoachPack(session) {
     { name: workoutMarkdownFilename(session), data: markdown },
     { name: 'manifest.json', data: JSON.stringify(manifest, null, 2) },
     { name: 'VANTAGE_Strength_Analysis_Template.md', data: strengthAnalysisTemplate(session) },
-    { name: 'VANTAGE_STRENGTH_COACH_PROMPT.md', data: await (await fetch('./VANTAGE_STRENGTH_COACH_PROMPT.md?v=1.5.9')).text() },
+    { name: 'VANTAGE_STRENGTH_COACH_PROMPT.md', data: await (await fetch('./VANTAGE_STRENGTH_COACH_PROMPT.md?v=1.6.0')).text() },
     ...exportMedia.map(item => ({ name: item.archivePath, data: item.blob }))
   ];
   return {
@@ -562,7 +578,7 @@ async function buildRecoveryCoachPack(session) {
     { name: recoveryMarkdownFilename(session), data: markdown },
     { name: 'manifest.json', data: JSON.stringify(manifest, null, 2) },
     { name: 'VANTAGE_Recovery_Analysis_Template.md', data: recoveryAnalysisTemplate(session) },
-    { name: 'VANTAGE_RECOVERY_COACH_PROMPT.md', data: await (await fetch('./VANTAGE_RECOVERY_COACH_PROMPT.md?v=1.5.9')).text() },
+    { name: 'VANTAGE_RECOVERY_COACH_PROMPT.md', data: await (await fetch('./VANTAGE_RECOVERY_COACH_PROMPT.md?v=1.6.0')).text() },
     ...exportMedia.map(item => ({ name: item.archivePath, data: item.blob }))
   ];
   return { blob: await createZip(entries), filename: recoveryCoachPackFilename(session), markdown, manifest, media: preparedMedia };
@@ -6715,6 +6731,18 @@ function bindEvents() {
     const count = Number(detail.downloaded || 0) + Number(detail.deleted || 0);
     if (count > 0) toast(`Cloud update applied · ${count} local change${count === 1 ? '' : 's'}`);
   });
+  window.addEventListener('vantage-noop-live-summary', event => {
+    if (!state.currentSession || !event.detail?.summary) return;
+    const hr = event.detail;
+    state.currentSession.noopLiveHr = {
+      source: 'Bluetooth Heart Rate Profile', device: String(hr.device || 'HR sensor'),
+      startedAt: hr.startedAt, endedAt: hr.endedAt, durationSeconds: hr.durationSeconds,
+      summary: hr.summary
+    };
+    persistDraft();
+    renderWorkout();
+    toast('Live strap heart-rate summary linked to workout');
+  });
   $('#recordRestDayButton').addEventListener('click', recordRestDay);
   $('#todayPlan').addEventListener('click', event => {
     if (event.target.closest('[data-undo-rest-day]')) removeTodayRestDay();
@@ -7254,7 +7282,7 @@ function bindEvents() {
   });
   $('#copyBloodworkPromptButton').addEventListener('click', async () => {
     try {
-      const response = await fetch('./VANTAGE_BLOODWORK_THREAD_PROMPT.md?v=1.5.9');
+      const response = await fetch('./VANTAGE_BLOODWORK_THREAD_PROMPT.md?v=1.6.0');
       if (!response.ok) throw new Error('Prompt file unavailable');
       await copyText(await response.text());
       toast('Bloodwork Analyzer prompt copied');
@@ -7408,7 +7436,7 @@ async function init() {
   setInterval(checkForLocalDayChange, 60000);
   window.addEventListener('focus', checkForLocalDayChange);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) checkForLocalDayChange(); });
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=1.5.9').catch(console.error);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js?v=1.6.0').catch(console.error);
 }
 
 init().catch(error => {
