@@ -10,11 +10,11 @@ test('v1.5.9 bottom tabs navigate every screen (regression: $ vs $$ selector)', 
  assert.ok(start >= 0 && end > start, 'Expected the navigation function');
  const fn = source.slice(start,end);
  assert.match(fn, /\$\$\('\.screen'\)\.forEach/);
- const screens = ['dashboard','workout','vitals','recovery'].map(name=>({
+ const screens = ['dashboard','workout','vitals','recovery','noop'].map(name=>({
   dataset:{screen:name},active:false,
   classList:{toggle(_,v){ this.active=v; }},
  }));
- const navs = ['dashboard','workout','vitals','recovery'].map(name=>({
+ const navs = ['dashboard','workout','vitals','recovery','noop'].map(name=>({
   dataset:{nav:name},isActive:false,
   classList:{toggle(_,v){this.isActive=v;}},
   scrollIntoView(){},
