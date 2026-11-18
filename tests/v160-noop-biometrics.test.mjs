@@ -1,8 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
+import {spawnSync} from 'node:child_process';
 import {decodeHeartRateMeasurement,heartRateZone,summarizeHeartRate} from '../noop-metrics.js';
 
+test('NOOP isolated browser module parses without crashing VANTAGE startup',()=>{
+ const result=spawnSync(process.execPath,['--check',new URL('../noop-integration-ui.js',import.meta.url).pathname],{encoding:'utf8'});
+ assert.equal(result.status,0,result.stderr||'syntax error');
+});
 test('NOOP live-HR parser reads both Bluetooth Heart Rate formats and ignores invalid sensor values',()=>{
  const u8=new DataView(new Uint8Array([0,129]).buffer);
  const u16=new DataView(new Uint8Array([1,155,0]).buffer);
@@ -60,4 +65,10 @@ test('NOOP receiver restricts accepted streams and requires independent bearer a
  assert.match(source,/vantage_noop_accept_secure/);
  assert.match(source,/content-encoding/);
  assert.doesNotMatch(source,/console\.log\(.*token/);
+});
+test('NOOP workout Markdown export includes linked live HR evidence',async()=>{
+ const source=await readFile(new URL('../app.js',import.meta.url),'utf8');
+ assert.match(source,/vantage-noop-live-summary/);
+ assert.match(source,/state\.currentSession\.noopLiveHr/);
+ assert.match(source,/## Live Bluetooth HR evidence \(NOOP companion\)/);
 });
