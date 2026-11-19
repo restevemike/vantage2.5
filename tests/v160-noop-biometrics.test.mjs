@@ -40,7 +40,7 @@ test('NOOP separate tab and workout badge are present without replacing normal t
  assert.match(html,/data-nav="noop"/);
  assert.match(html,/id="noopWorkoutStatus"/);
  assert.match(html,/id="noopLiveStatus"/);
- assert.match(html,/noop-integration-ui\.js\?v=1\.6\.3/);
+ assert.match(html,/noop-integration-ui\.js\?v=1\.6\.4/);
  for(const target of ['dashboard','workout','meals','vitals','recovery','cloud'])
   assert.match(html,new RegExp('data-nav="'+target+'"'));
 });
@@ -48,14 +48,14 @@ test('NOOP PWA module cached and v1.6.1 app identity preserved',async()=>{
  const files=await Promise.all(['sw.js','manifest.webmanifest','app.js','package.json'].map(
   p=>readFile(new URL('../'+p,import.meta.url),'utf8')));
  const [sw,manifestSource,app,pkg]=files;
- assert.match(sw,/vantage-training-console-v16-3/);
+ assert.match(sw,/vantage-training-console-v16-4/);
  assert.match(sw,/noop-integration-ui\.js/);
  assert.match(sw,/noop-metrics\.js/);
  const manifest=JSON.parse(manifestSource);
  assert.equal(manifest.id,'./vantage-training-console-v133');
  assert.equal(manifest.start_url,'./?pwa=161');
- assert.match(app,/APP_VERSION = '1\.6\.3'/);
- assert.equal(JSON.parse(pkg).version,'1.6.3');
+ assert.match(app,/APP_VERSION = '1\.6\.4'/);
+ assert.equal(JSON.parse(pkg).version,'1.6.4');
 });
 test('NOOP receiver restricts accepted streams and requires independent bearer auth',async()=>{
  const source=await readFile(new URL('../supabase/functions/vantage-noop-push/index.ts',import.meta.url),'utf8');
