@@ -1,8 +1,6 @@
 import * as db from "./db.js?v=1.6.1";
 import { calculateReadiness } from "./readiness.js?v=1.6.1";
 import { cloudAuthenticatedClient } from "./cloud-sync.js?v=1.6.1";
-import { runExperimentalOcr } from "./ocr-engine.js?v=1.6.1";
-import { parseVitalsScreenText } from "./flow-vitals-parser.js?v=1.6.3";
 
 // Flow is a read-only synthesis of local confirmed vitals and NOOP historical snapshots.
 // No inferred measurement is written to the vitals store.
@@ -132,92 +130,21 @@ async function refreshFlow() {
     status.textContent = "Flow unavailable: " + String(error?.message || error);
   } finally {flowBusy = false;}
 }
-let ocrFile = null, ocrResult = null, imageUrl = null;
-const fields = {scales:[["weight","Weight (kg)",20,400]], bp:[["systolic","Systolic (mmHg)",50,260],["diastolic","Diastolic (mmHg)",30,180],["pulse","Cuff pulse (bpm)",20,220]]};
-function renderReview(kind, result) {
-  const host = $("#flowOcrReview"); host.replaceChildren();
-  const caption=document.createElement("p");
-  caption.textContent="Verify each reading against the screenshot. You can correct the OCR values before applying them. No record is saved at this step.";
-  host.append(caption);
-  for (const [key,label,min,max] of fields[kind]) {
-    const wrap=document.createElement("label");wrap.textContent=label;
-    const input=document.createElement("input");input.type="number";input.step=key==="weight"?"0.01":"1";
-    input.min=String(min);input.max=String(max);input.name=key;
-    if (result.values[key]!=null) input.value=String(result.values[key]);
-    wrap.append(input);host.append(wrap);
-  }
-  const warnings=document.createElement("p");
-  warnings.textContent=result.warnings.join(" ");
-  host.append(warnings);
-  host.hidden=false;
-  $("#flowOcrApply").disabled=false;
-}
-async function runScreenshotOcr() {
-  const status=$("#flowOcrStatus"), kind=$("#flowOcrKind").value;
-  if (!ocrFile) {status.textContent="Choose a screenshot first.";return;}
-  if (ocrFile.size > 12*1024*1024){status.textContent="Choose an image under 12 MB.";return;}
-  const button=$("#flowOcrRun");button.disabled=true;ocrResult=null;
-  $("#flowOcrReview").hidden=true;$("#flowOcrApply").disabled=true;
-  try {
-    const response=await runExperimentalOcr(ocrFile,{
-      onProgress:progress=>{status.textContent=(progress.status||"Reading image")+" "+Math.round((progress.progress||0)*100)+"%";}
-    });
-    const parsed=parseVitalsScreenText(response.text,kind);
-    ocrResult={kind,parsed,confidence:response.confidence};
-    $("#flowOcrRaw").textContent=response.text || "(no readable text)";
-    renderReview(kind,parsed);
-    status.textContent="OCR complete (engine confidence "+Math.round(response.confidence)+"%). Confirm values and click Apply to vitals form.";
-  } catch (error) {status.textContent="OCR failed: "+String(error?.message||error)+". Enter the readings manually in Vitals.";}
-  finally {button.disabled=false;}
-}
-function applyReview() {
-  const status=$("#flowOcrStatus"), kind=ocrResult?.kind, host=$("#flowOcrReview"), form=$("#vitalsForm");
-  if (!kind||!host||!form) return;
-  const selected={};
-  for(const [key,label,min,max] of fields[kind]){
-    const input=host.querySelector('input[name="'+key+'"]');
-    if (!input?.value.trim()) continue;
-    const value=n(input.value);
-    if (value==null||value<min||value>max){
-      status.textContent="Check "+label+"; the value is outside the supported range.";return;
-    }
-    selected[key]=value;
-  }
-  if(kind==="bp"){
-    if(n(selected.systolic)==null||n(selected.diastolic)==null||selected.systolic<=selected.diastolic){
-      status.textContent="Enter and confirm a valid SYS/DIA pair before applying.";return;
-    }
-  }else if(n(selected.weight)==null){status.textContent="Enter a confirmed weight before applying.";return;}
-  const conflicts=Object.entries(selected).filter(([key,value])=>form.elements[key]?.value.trim() && n(form.elements[key].value)!==value);
-  if(conflicts.length && !window.confirm("Replace existing unsaved vitals form values for "+conflicts.map(([key])=>key).join(", ")+"?"))return;
-  for(const [key,value] of Object.entries(selected))form.elements[key].value=String(value);
-  form.dispatchEvent(new Event("input",{bubbles:true}));
-  status.textContent="Reviewed values applied to the Vitals form. Check the date and tap Save vitals to persist them. OCR image was not uploaded or saved.";
-  form.scrollIntoView({behavior:"smooth",block:"start"});
-}
-function init() {
-  if (!$("#flowPanel")||!$("#flowOcrInput"))return;
-  $("#flowRefresh").addEventListener("click",()=>void refreshFlow());
-  $("#flowOpenOcr")?.addEventListener("click",()=>setTimeout(()=>$("#flowVitalsOcr")?.scrollIntoView({behavior:"smooth",block:"start"}),120));
-  const input=$("#flowOcrInput");
-  input.addEventListener("change",()=>{
-    ocrFile=input.files?.[0]||null;
-    $("#flowOcrStatus").textContent=ocrFile ? "Selected "+ocrFile.name+" — choose the device and run OCR." : "Choose an image.";
-    $("#flowOcrReview").hidden=true;$("#flowOcrApply").disabled=true;ocrResult=null;
-    if(imageUrl) URL.revokeObjectURL(imageUrl);
-    imageUrl=ocrFile?URL.createObjectURL(ocrFile):null;
-    const preview=$("#flowOcrPreview");
-    preview.hidden=!imageUrl;if(imageUrl)preview.src=imageUrl;else preview.removeAttribute("src");
-  });
-  $("#flowOcrKind").addEventListener("change",()=>{$("#flowOcrReview").hidden=true;$("#flowOcrApply").disabled=true;ocrResult=null;});
-  $("#flowOcrRun").addEventListener("click",()=>void runScreenshotOcr());
-  $("#flowOcrApply").addEventListener("click",applyReview);
+function init(){
+  if (!$("#flowPanel")) return;
+  $("#flowRefresh")?.addEventListener("click",()=>void refreshFlow());
   window.addEventListener("vantage-vitals-saved",()=>void refreshFlow());
   window.addEventListener("vantage-cloud-data-applied",()=>void refreshFlow());
   window.addEventListener("vantage-cloud-auth-change",()=>void refreshFlow());
   window.addEventListener("focus",()=>void refreshFlow());
-  window.addEventListener("vantage-db-change",event=>{if(event.detail?.storeName==="vitals")void refreshFlow();});
-  setInterval(()=>{if(document.visibilityState==="visible" && $("#dashboardScreen")?.classList.contains("active"))void refreshFlow();},180000);
+  window.addEventListener("vantage-db-change",event=>{
+    if(event.detail?.storeName==="vitals")void refreshFlow();
+  });
+  setInterval(()=>{
+    if(document.visibilityState==="visible" && $("#dashboardScreen")?.classList.contains("active"))
+      void refreshFlow();
+  },180000);
   setTimeout(()=>void refreshFlow(),1600);
 }
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);else init();
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);
+else init();
