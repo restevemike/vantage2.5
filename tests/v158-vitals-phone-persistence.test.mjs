@@ -43,8 +43,8 @@ test('v1.6.1 updates frontend, service worker and app version together', async (
   const manifest = JSON.parse(manifestSource);
   assert.equal(manifest.start_url, './?pwa=161');
   assert.equal(manifest.id, './vantage-training-console-v133');
-  assert.match(app,/APP_VERSION = '1\.6\.3'/);
-  assert.match(html,/v1\.6\.3/);
-  assert.match(sw,/vantage-training-console-v16-3/);
-  assert.equal(JSON.parse(pkg).version,'1.6.3');
+  assert.match(app,/APP_VERSION = '1\.6\.4'/);
+  assert.match(html,/v1\.6\.4/);
+  assert.match(sw,/vantage-training-console-v16-4/);
+  assert.equal(JSON.parse(pkg).version,'1.6.4');
 });
