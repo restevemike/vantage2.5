@@ -1344,3 +1344,21 @@ html.exercise-drag-active, body.exercise-drag-active { user-select: none; }
 .flow-ocr-review p { grid-column:1/-1; margin:0; }
 .flow-ocr-raw { font-size:.8rem; white-space:pre-wrap; overflow-wrap:anywhere; padding:12px; max-height:260px; overflow:auto; border:1px solid var(--line); border-radius:10px; }
 @media(min-width:750px) { .flow-tile-grid { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+
+/* Separate scales / cuff OCR review and explicit confirmation indicators. */
+.flow-ocr-layout { display:grid;gap:14px;margin:0 0 16px; }
+.flow-ocr-panel { scroll-margin-top:96px; }
+.flow-ocr-panel .panel-heading { margin-bottom:0; }
+.flow-ocr-upload { display:flex;flex-direction:column;gap:9px;font-weight:700;color:var(--text); }
+.flow-ocr-upload input[type=file] { width:100%;max-width:100%;padding:12px;border:1px dashed var(--line);border-radius:12px;background:var(--surface-2);color:var(--text); }
+.flow-ocr-preview { width:auto;max-width:100%;min-height:0; }
+.flow-ocr-review { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px; }
+.flow-ocr-review-hint,.flow-ocr-review-warnings { grid-column:1/-1;color:var(--muted);font-size:.85rem;line-height:1.5; }
+.flow-ocr-field { display:flex;flex-direction:column;gap:6px;min-width:0;font-size:.86rem;font-weight:600; }
+.flow-ocr-field input { width:100%;min-width:0; }
+.flow-ocr-field.flow-ocr-detected input { border-color:var(--blue);box-shadow:0 0 0 1px var(--blue); }
+.flow-ocr-applied-summary { border:1px solid var(--green);border-left:4px solid var(--green);border-radius:12px;padding:12px;background:rgba(99,200,138,.09);color:var(--text);font-weight:650;line-height:1.5; }
+#vitalsForm label.flow-ocr-confirmed-label { position:relative;border-radius:10px;outline:2px solid var(--green);outline-offset:4px; }
+#vitalsForm input.flow-ocr-confirmed-input { border-color:var(--green);background:rgba(99,200,138,.10);box-shadow:0 0 0 1px var(--green);font-weight:750; }
+.flow-ocr-confirmed-tag { display:block;margin:6px 0 0;color:var(--green);font-size:.76rem;font-weight:700;line-height:1.35; }
+@media(max-width:380px) { .flow-ocr-review { grid-template-columns:1fr; } }
