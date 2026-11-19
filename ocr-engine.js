@@ -67,19 +67,38 @@ async function preprocessImage(blob) {
   return new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.95));
 }
 
-export async function runExperimentalOcr(blob, { onProgress = () => {} } = {}) {
+export async function runExperimentalOcr(blob, { onProgress = () => {}, deviceMode = false } = {}) {
   if (!(blob instanceof Blob)) throw new Error('No valid image was supplied to OCR.');
-  onProgress({ status: 'Preparing image', progress: 0.02 });
+  onProgress({status:'Preparing image',progress:0.02});
   const prepared = await preprocessImage(blob);
   const Tesseract = await getTesseract();
-  onProgress({ status: 'Loading English OCR model', progress: 0.05 });
-  const worker = await Tesseract.createWorker('eng', 1, {
-    logger: message => onProgress({ status: String(message.status || 'Reading image'), progress: Number(message.progress || 0) })
+  onProgress({status:'Loading English OCR model',progress:0.05});
+  const worker = await Tesseract.createWorker('eng',1,{
+    logger: message => onProgress({status:String(message.status||'Reading image'),progress:Number(message.progress||0)})
   });
   try {
-    await worker.setParameters({ preserve_interword_spaces: '1' });
-    const result = await worker.recognize(prepared);
-    return { text: result?.data?.text || '', confidence: Number(result?.data?.confidence || 0) };
+    await worker.setParameters({preserve_interword_spaces:'1'});
+    if(!deviceMode) {
+      const result=await worker.recognize(prepared);
+      return {text:result?.data?.text||'',confidence:Number(result?.data?.confidence||0)};
+    }
+    // Scale and BP monitor screens vary wildly: keep the original image (including
+    // digit colour/contrast), then try the higher contrast version with sparse text mode.
+    try { await worker.setParameters({tessedit_pageseg_mode:'6'}); } catch {/* browser model default */ }
+    onProgress({status:'Reading original device screen',progress:0.18});
+    const original=await worker.recognize(blob);
+    const candidates=[{text:original?.data?.text||'',confidence:Number(original?.data?.confidence||0)}];
+    try {
+      await worker.setParameters({tessedit_pageseg_mode:'11'});
+      onProgress({status:'Checking alternate contrast and layout',progress:0.72});
+      const enhanced=await worker.recognize(prepared);
+      candidates.push({text:enhanced?.data?.text||'',confidence:Number(enhanced?.data?.confidence||0)});
+    }catch(error){
+      // Preserve first pass if the optional second pass is unsupported or fails.
+      onProgress({status:'Using original-image OCR result',progress:0.96});
+    }
+    const best=[...candidates].sort((a,b)=>b.confidence-a.confidence)[0];
+    return {...best,candidates};
   } finally {
     await worker.terminate();
   }
