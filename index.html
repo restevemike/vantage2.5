@@ -39,7 +39,8 @@
           <div><p class="eyebrow">Daily signals · VANTAGE</p><h3>Flow</h3></div>
           <div class="panel-actions">
             <button id="flowRefresh" type="button" class="button button-ghost button-small">Refresh</button>
-            <button id="flowOpenOcr" type="button" class="button button-ghost button-small" data-go="vitals">Add scales / BP</button>
+            <button id="flowOpenWeight" type="button" class="button button-ghost button-small" data-go="vitals">Add weight</button>
+            <button id="flowOpenBp" type="button" class="button button-ghost button-small" data-go="vitals">Add BP</button>
           </div>
         </div>
         <p id="flowStatus" class="medical-note" role="status">Loading confirmed vitals and NOOP readings…</p>
@@ -596,29 +597,38 @@
       </section>
 
 
-      <section id="flowVitalsOcr" class="panel flow-ocr-panel">
-        <div class="panel-heading"><div><p class="eyebrow">Local OCR · optional</p><h3>Scales &amp; blood-pressure screenshots</h3></div></div>
-        <p>Read a screen photo or screenshot on this phone. The suggested numbers are <strong>not saved</strong> until you check them, apply them to the existing vitals form, and press Save vitals. Confirm the date, units and cuff values.</p>
-        <div class="form-grid">
-          <label>Screenshot type
-            <select id="flowOcrKind"><option value="scales">Body-weight scales</option><option value="bp">Blood-pressure monitor</option></select>
+      <section id="flowVitalsOcr" class="flow-ocr-layout" aria-label="Import readings from device photos">
+        <div class="panel flow-ocr-panel" id="flowWeightSection">
+          <div class="panel-heading"><div><p class="eyebrow">Screenshot import · 1</p><h3>Weight / body scales</h3></div></div>
+          <p>Upload a scales screenshot or photo. Review the extracted kg value before populating Vitals.</p>
+          <label class="flow-ocr-upload">Weight screenshot
+            <input id="flowWeightOcrInput" type="file" accept="image/*,.jpg,.jpeg,.png,.webp" aria-label="Select weight scales screenshot">
           </label>
-          <label>Choose screenshot
-            <input id="flowOcrInput" type="file" accept="image/*,.jpg,.jpeg,.png,.webp" aria-label="Select a scales or blood-pressure screenshot">
+          <img id="flowWeightOcrPreview" class="flow-ocr-preview" alt="Selected weight-scale screen" hidden>
+          <button id="flowWeightOcrRun" class="button button-ghost button-wide" type="button">Read weight with OCR</button>
+          <div id="flowWeightOcrStatus" class="import-status" role="status" aria-live="polite">No weight screenshot selected.</div>
+          <div id="flowWeightOcrReview" class="flow-ocr-review" hidden></div>
+          <button id="flowWeightOcrConfirm" class="button button-primary button-wide" type="button" disabled>Confirm weight &amp; populate Vitals</button>
+          <details><summary>View extracted weight text</summary><pre id="flowWeightOcrRaw" class="flow-ocr-raw">No OCR text yet.</pre></details>
+        </div>
+        <div class="panel flow-ocr-panel" id="flowBpSection">
+          <div class="panel-heading"><div><p class="eyebrow">Screenshot import · 2</p><h3>Blood pressure / cuff</h3></div></div>
+          <p>Upload a separate BP monitor photo. Check SYS, DIA and pulse individually before populating Vitals.</p>
+          <label class="flow-ocr-upload">Blood-pressure screenshot
+            <input id="flowBpOcrInput" type="file" accept="image/*,.jpg,.jpeg,.png,.webp" aria-label="Select blood pressure monitor screenshot">
           </label>
+          <img id="flowBpOcrPreview" class="flow-ocr-preview" alt="Selected blood-pressure monitor screen" hidden>
+          <button id="flowBpOcrRun" class="button button-ghost button-wide" type="button">Read BP with OCR</button>
+          <div id="flowBpOcrStatus" class="import-status" role="status" aria-live="polite">No BP screenshot selected.</div>
+          <div id="flowBpOcrReview" class="flow-ocr-review" hidden></div>
+          <button id="flowBpOcrConfirm" class="button button-primary button-wide" type="button" disabled>Confirm BP &amp; populate Vitals</button>
+          <details><summary>View extracted BP text</summary><pre id="flowBpOcrRaw" class="flow-ocr-raw">No OCR text yet.</pre></details>
         </div>
-        <img id="flowOcrPreview" class="flow-ocr-preview" alt="Selected screen photo for review" hidden>
-        <div class="data-actions">
-          <button id="flowOcrRun" class="button button-ghost button-wide" type="button">Read screenshot with OCR</button>
-          <button id="flowOcrApply" class="button button-primary button-wide" type="button" disabled>Apply reviewed values to vitals form</button>
-        </div>
-        <div id="flowOcrStatus" class="import-status" role="status">No screenshot selected.</div>
-        <div id="flowOcrReview" class="form-grid flow-ocr-review" hidden></div>
-        <details><summary>View recognised text for verification</summary><pre id="flowOcrRaw" class="flow-ocr-raw">No OCR text yet.</pre></details>
-        <p class="medical-note">OCR runs in your browser using the existing engine. Images are not uploaded by Flow. Keep BP cuff pulse separate from resting heart rate. OCR is not a medical measurement.</p>
+        <p class="medical-note">OCR values are suggestions only, and screenshots remain on your phone. Confirmation highlights the relevant Vitals fields; <strong>Save vitals</strong> is still required to record them. No scales or BP values are copied automatically from OCR.</p>
       </section>
 
       <form id="vitalsForm" class="panel form-grid">
+        <div id="flowOcrAppliedSummary" class="flow-ocr-applied-summary full-width" role="status" aria-live="polite" hidden></div>
         <label>Date<input name="date" type="date" required></label>
         <label>NOOP recovery (%)<input name="recovery" type="number" min="0" max="100" step="any" inputmode="decimal"></label>
         <label>Charge (%)<input name="charge" type="number" min="0" max="100" step="any" inputmode="decimal"></label>
