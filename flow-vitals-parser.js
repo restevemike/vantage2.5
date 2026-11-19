@@ -17,11 +17,16 @@ export function parseVitalsScreenText(input, kind = "scales") {
   const warnings = ["OCR is a suggestion only. Confirm the screen values, units and date before saving."];
   if (kind === "scales") {
     const labelled = text.match(/\b(?:body\s*weight|weight|wt)\b\s*(?:\(\s*(kg|kgs?|lb|lbs)\s*\))?\s*[:=\-]?\s*(\d{2,3}(?:[.,]\d{1,2})?)\s*(kg|kgs?|lbs?)?(?=\s|$|[)%])/i);
-    const unitReadings = [...text.matchAll(/\\b(\\d{2,3}(?:[.,]\\d{1,2})?)\\s*(kg|kgs?|lb|lbs)\\b/gi)];
+    const unitReadings = [...text.matchAll(/\b(\d{2,3}(?:[.,]\d{1,2})?)\s*(kg|kgs?|lbs?)\b/gi)];
     // Body-composition scales also display muscle/fat mass. Do not treat the first kg token as body weight.
-    const unitReading = unitReadings.length === 1 && !/\\b(?:muscle\\s*mass|fat\\s*mass|bone\\s*mass|fat.free\\s*mass|water\\s*mass)\\b/i.test(text)
+    const unitReading = unitReadings.length === 1 && !/\b(?:muscle\s*mass|fat\s*mass|bone\s*mass|fat.free\s*mass|water\s*mass)\b/i.test(text)
       ? unitReadings[0] : null;
-    const raw = number(labelled ? labelled[2] : unitReading?.[1]);
+    // Offer an explicitly reviewed guess when OCR sees only a single bare decimal.
+    const bareDecimal = !labelled && !unitReading && !/\b(?:fat|bmi|water|muscle|bone)\b/i.test(text)
+      ? [...text.matchAll(/\b(\d{2,3}[.,]\d{1,2})\b/g)] : [];
+    const guessed = bareDecimal.length === 1 ? bareDecimal[0] : null;
+    if (guessed) warnings.push("Unlabelled scale number guessed; verify against screenshot.");
+    const raw = number(labelled ? labelled[2] : (unitReading?.[1] ?? guessed?.[1]));
     const unit = String(labelled ? (labelled[3] || labelled[1] || "") : (unitReading?.[2] || "")).toLowerCase();
     const kg = raw == null ? null : unit.startsWith("lb") ? raw / 2.2046226218 : raw;
     const checked = inRange(kg, 20, 400);
@@ -43,13 +48,33 @@ export function parseVitalsScreenText(input, kind = "scales") {
         diastolic ??= inRange(number(pair[2]), 30, 180);
       }
     }
+    // BP displays can show a SYS/DIA/PUL header and a separate column of values.
+    const flattened = text.replace(/\s+/g," ");
+    const header = flattened.match(/\bSYS(?:TOLIC)?\b[\s:/-]*\bDIA(?:STOLIC)?\b(?:[\s:/-]*\bPUL(?:SE)?\b)?/i);
+    let reviewedPulse = pulse;
+    if (header) {
+      const nums = [...flattened.slice(header.index+header[0].length).matchAll(/\b(\d{2,3})\b/g)].slice(0,3).map(m=>Number(m[1]));
+      if(nums.length>=2 && nums[0]>=50 && nums[0]<=260 && nums[1]>=30 && nums[1]<=180 && nums[0]>nums[1]){
+        systolic=nums[0];diastolic=nums[1];
+        if(nums[2]>=20&&nums[2]<=220)reviewedPulse=nums[2];
+        warnings.push("BP numbers paired by column order. Verify SYS, DIA and pulse.");
+      }
+    }
+    if((systolic==null||diastolic==null)&&!/\b(?:SYS|SYSTOLIC|DIA|DIASTOLIC|PUL|PULSE)\b/i.test(flattened)){
+      const nums=[...flattened.matchAll(/\b(\d{2,3})\b/g)].map(m=>Number(m[1]));
+      if(nums.length>=2&&nums.length<=3&&nums[0]>=50&&nums[0]<=260&&nums[1]>=30&&nums[1]<=180&&nums[0]>nums[1]){
+        systolic=nums[0];diastolic=nums[1];
+        if(nums[2]>=20&&nums[2]<=220)reviewedPulse=nums[2];
+        warnings.push("Labels missing: BP numbers guessed by order. Verify before applying.");
+      }
+    }
     if (systolic != null && diastolic != null && systolic > diastolic) {
       values.systolic = systolic;
       values.diastolic = diastolic;
     } else {
       warnings.push("Complete SYS/DIA pair not recognised reliably; review and enter both values manually.");
     }
-    if (pulse != null) values.pulse = pulse;
+    if (reviewedPulse != null) values.pulse = reviewedPulse;
     return { values, warnings };
   }
   throw new Error("Choose scales or blood pressure before analysing a screenshot.");
