@@ -28,3 +28,26 @@ test('OCR cannot be treated as a saved vitals record', () => {
  assert.ok(result.warnings.some(message=>message.includes('Confirm')));
  assert.equal(result.values.updatedAt,undefined);
 });
+
+test('weight OCR: number and unit without explicit weight label', () => {
+ assert.equal(parseVitalsScreenText('89.45 kg', 'scales').values.weight,89.45);
+});
+test('weight OCR: single bare decimal is a reviewed guess', () => {
+ const result=parseVitalsScreenText('89.45', 'scales');
+ assert.equal(result.values.weight,89.45);
+ assert.ok(result.warnings.some(warning=>warning.includes('guessed')));
+});
+test('BP OCR: stacked SYS / DIA / PULSE display', () => {
+ const result=parseVitalsScreenText('SYS\n120\nDIA\n96\nPULSE\n55','bp');
+ assert.deepEqual(result.values,{systolic:120,diastolic:96,pulse:55});
+});
+test('BP OCR: column headings followed by a row of numbers', () => {
+ const result=parseVitalsScreenText('SYS DIA PUL\n120\n96\n55','bp');
+ assert.deepEqual(result.values,{systolic:120,diastolic:96,pulse:55});
+ assert.ok(result.warnings.some(warning=>warning.includes('column')));
+});
+test('BP OCR: numeric-only guess requires human review', () => {
+ const result=parseVitalsScreenText('120\n96\n55','bp');
+ assert.deepEqual(result.values,{systolic:120,diastolic:96,pulse:55});
+ assert.ok(result.warnings.some(warning=>warning.includes('guessed')));
+});
